@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Vehículos — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+        aside{background:var(--dark);border-right:1px solid var(--border);padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem;}
+        .brand{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.05em;}
+        .brand b{color:var(--accent);}
+        .tag{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);letter-spacing:.2em;margin-top:-.5rem;}
+        nav{display:flex;flex-direction:column;gap:.25rem;}
+        .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border-radius:4px;font-size:.875rem;color:var(--muted);text-decoration:none;transition:background .2s,color .2s;}
+        .nav-item:hover,.nav-item.active{background:rgba(230,57,70,.08);color:var(--white);}
+        .nav-item.active{border-left:2px solid var(--accent);padding-left:.6rem;}
+        .sidebar-footer{margin-top:auto;}
+        .user-chip{background:var(--card);border:1px solid var(--border);padding:.75rem;border-radius:4px;font-size:.8rem;margin-bottom:.5rem;}
+        .user-chip .name{font-weight:600;}
+        .user-chip .email{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);}
+        .logout-btn{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:.85rem;cursor:pointer;padding:.65rem .85rem;width:100%;text-align:left;display:flex;align-items:center;gap:.75rem;border-radius:4px;transition:background .2s,color .2s;}
+        .logout-btn:hover{background:rgba(230,57,70,.08);color:var(--accent);}
+        main{padding:2.5rem;overflow-y:auto;}
+        .page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:2rem;}
+        .page-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.75rem;}
+        .page-title{font-family:var(--font-display);font-size:2.5rem;letter-spacing:.03em;}
+        .page-title span{color:var(--accent);}
+        .btn-add{background:var(--accent);color:#fff;padding:.75rem 1.5rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.08em;transition:opacity .2s;}
+        .btn-add:hover{opacity:.85;}
+        .vehicle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;}
+        .vehicle-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1.75rem;position:relative;overflow:hidden;}
+        .vehicle-card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;background:var(--teal);}
+        .vehicle-plate{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);letter-spacing:.1em;border:1px solid var(--border);padding:.3rem .6rem;border-radius:3px;}
+        .vehicle-card h3{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.03em;margin:.75rem 0 .25rem;}
+        .vehicle-meta{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem;}
+        .sensor-mini{display:flex;gap:.4rem;margin-bottom:1.5rem;}
+        .sensor-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+        .sensor-bar-fill{height:100%;background:var(--teal);}
+        .vehicle-actions{display:flex;gap:.6rem;}
+        .btn-mini{flex:1;text-align:center;padding:.55rem;border-radius:3px;text-decoration:none;font-size:.75rem;font-family:var(--font-mono);letter-spacing:.05em;transition:opacity .2s;cursor:pointer;border:none;}
+        .btn-mini-view{background:var(--teal);color:var(--black);}
+        .btn-mini-edit{background:none;border:1px solid var(--border);color:var(--white);}
+        .btn-mini-delete{background:none;border:1px solid rgba(230,57,70,.3);color:var(--accent);}
+        .btn-mini:hover{opacity:.8;}
+        .empty-state{text-align:center;padding:5rem 2rem;border:1px dashed var(--border);border-radius:4px;}
+        .empty-state h2{font-family:var(--font-display);font-size:2rem;letter-spacing:.03em;margin-bottom:.75rem;}
+        .empty-state p{color:var(--muted);margin-bottom:2rem;}
+    </style>
+</head>
+<body>
+
+<aside>
+    <div>
+        <div class="brand">Auto <b>Sen</b></div>
+        <div class="tag">// monitoreo vehicular</div>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}" class="nav-item">🏠 Dashboard</a>
+        <a th:href="@{/vehiculos}" class="nav-item active">🚗 Mis Vehículos</a>
+        <a th:href="@{/vehiculos/crear}" class="nav-item">➕ Agregar Vehículo</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="name" th:text="${cliente.nombreCliente} + ' ' + ${cliente.apellidoCliente}"></div>
+            <div class="email" th:text="${cliente.correo}"></div>
+        </div>
+        <form method="post" th:action="@{/logout}">
+            <button type="submit" class="logout-btn">🚪 Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
+
+<main>
+    <div class="page-header">
+        <div>
+            <div class="page-tag">// Panel del usuario</div>
+            <h1 class="page-title">MIS <span>VEHÍCULOS</span></h1>
+        </div>
+        <a th:href="@{/vehiculos/crear}" class="btn-add">+ AGREGAR VEHÍCULO</a>
+    </div>
+
+    <div class="vehicle-grid" th:if="${not #lists.isEmpty(vehiculos)}">
+        <div class="vehicle-card" th:each="v : ${vehiculos}">
+            <span class="vehicle-plate" th:text="${v.placa}"></span>
+            <h3 th:text="${v.nombreVehiculo + ' — ' + v.marca}"></h3>
+            <div class="vehicle-meta" th:text="'Color: ' + ${v.color}"></div>
+            <div class="sensor-mini" th:if="${v.sensores != null}">
+                <div class="sensor-bar" th:each="s : ${v.sensores}">
+                    <div class="sensor-bar-fill"
+                         th:style="'width:' + ${s.nivel} + '%; background:' + (${s.nivel >= 70} ? '#e63946' : (${s.nivel >= 40} ? '#f4a261' : '#2ec4b6'))">
+                    </div>
+                </div>
+            </div>
+            <div class="vehicle-actions">
+                <a th:href="@{/sensores}" class="nav-item">📡 Sensores</a>      
+                   </div>
+        </div>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(vehiculos)}">
+        <h2>AÚN NO TIENES VEHÍCULOS</h2>
+        <p>Registra tu primer vehículo para empezar a monitorear sus sensores.</p>
+        <a th:href="@{/vehiculos/crear}" class="btn-add">+ AGREGAR VEHÍCULO</a>
+    </div>
+</main>
+
+</body>
+</html>

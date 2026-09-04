@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes - AutoSen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #0d0d0f;
+            color: #e6e6e6;
+            font-family: 'DM Sans', sans-serif;
+            padding: 40px;
+        }
+
+        h1, .titulo-seccion { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        header.reporte-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2a2a2e;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        header.reporte-header h1 { font-size: 42px; color: #ffffff; }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid #2a2a2e;
+            cursor: pointer;
+        }
+
+        .btn-primary { background-color: #4dd8c4; color: #0d0d0f; border: none; }
+        .btn-secondary { background-color: #1a1a1e; color: #e6e6e6; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .btn-group { display: flex; gap: 10px; }
+
+        .resumen-grid { display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; }
+
+        .card {
+            background-color: #1a1a1e;
+            border: 1px solid #2a2a2e;
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .card .valor { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; }
+        .card .etiqueta { font-size: 13px; color: #9a9a9a; margin-top: 6px; }
+        .card.clientes .valor { color: #4d9fe6; }
+        .card.vehiculos .valor { color: #ffffff; }
+        .card.sensores .valor { color: #b98ae6; }
+        .card.advertencia .valor { color: #e6b84d; }
+        .card.falla .valor { color: #e65a5a; }
+
+        section { margin-bottom: 40px; }
+
+        .titulo-seccion {
+            font-size: 24px;
+            color: #ffffff;
+            margin-bottom: 16px;
+            border-left: 4px solid #4dd8c4;
+            padding-left: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        table { width: 100%; border-collapse: collapse; background-color: #131316; }
+
+        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #2a2a2e; font-size: 14px; }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9a9a9a;
+            background-color: #1a1a1e;
+        }
+
+        tr:hover td { background-color: #1c1c20; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge.activo { background-color: rgba(77,216,138,0.15); color: #4dd88a; }
+        .badge.bloqueado { background-color: rgba(230,90,90,0.15); color: #e65a5a; }
+
+        .vacio { color: #6a6a6a; font-style: italic; padding: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <header class="reporte-header">
+        <h1>Reportes</h1>
+        <div class="btn-group">
+            <a class="btn btn-primary" th:href="@{/admin/reportes/pdf}">Descargar PDF completo</a>
+            <a class="btn btn-secondary" th:href="@{/admin/reportes/csv/sensores}">CSV sensores</a>
+            <a class="btn btn-secondary" th:href="@{/admin/reportes/csv/fallas}">CSV fallas</a>
+        </div>
+    </header>
+
+    <section class="resumen-grid">
+        <div class="card clientes">
+            <div class="valor" th:text="${totalClientes}">0</div>
+            <div class="etiqueta">Clientes</div>
+        </div>
+        <div class="card vehiculos">
+            <div class="valor" th:text="${totalVehiculos}">0</div>
+            <div class="etiqueta">Vehículos</div>
+        </div>
+        <div class="card sensores">
+            <div class="valor" th:text="${totalSensores}">0</div>
+            <div class="etiqueta">Sensores</div>
+        </div>
+        <div class="card advertencia">
+            <div class="valor" th:text="${totalAdvertencias}">0</div>
+            <div class="etiqueta">En advertencia</div>
+        </div>
+        <div class="card falla">
+            <div class="valor" th:text="${totalFallas}">0</div>
+            <div class="etiqueta">En falla</div>
+        </div>
+    </section>
+
+    <section>
+        <div class="titulo-seccion">
+            <span>Clientes</span>
+            <a class="btn btn-secondary btn-small" th:href="@{/admin/reportes/csv/clientes}">Exportar CSV</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Estado</th>
+                    <th>Vehículos</th>
+                    <th>Reporte</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${clientes.isEmpty()}">
+                    <td colspan="6" class="vacio">No hay clientes registrados.</td>
+                </tr>
+                <tr th:each="c : ${clientes}">
+                    <td class="mono" th:text="${c.idCliente}">0</td>
+                    <td th:text="${c.nombreCliente} + ' ' + ${c.apellidoCliente}">Nombre</td>
+                    <td th:text="${c.correo}">correo</td>
+                    <td>
+                        <span class="badge" th:classappend="${c.estado}" th:text="${c.estado}">estado</span>
+                    </td>
+                    <td th:text="${c.vehiculos != null ? c.vehiculos.size() : 0}">0</td>
+                    <td>
+                        <a class="btn btn-secondary btn-small"
+                           th:href="@{/admin/reportes/cliente/{id}/pdf(id=${c.idCliente})}">PDF</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <div class="titulo-seccion">
+            <span>Vehículos con fallas</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Vehículo</th>
+                    <th>Placa</th>
+                    <th>Cliente</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${vehiculosConFallas.isEmpty()}">
+                    <td colspan="3" class="vacio">No hay vehículos con fallas activas.</td>
+                </tr>
+                <tr th:each="v : ${vehiculosConFallas}">
+                    <td th:text="${v.nombreVehiculo}">Vehículo</td>
+                    <td class="mono" th:text="${v.placa}">Placa</td>
+                    <td th:text="${v.cliente != null ? (v.cliente.nombreCliente + ' ' + v.cliente.apellidoCliente) : '-'}">Cliente</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <div class="titulo-seccion">
+            <span>Clientes bloqueados</span>
+            <a class="btn btn-secondary btn-small" th:href="@{/admin/reportes/csv/bloqueados}">Exportar CSV</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Vehículos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${clientesBloqueados.isEmpty()}">
+                    <td colspan="3" class="vacio">No hay clientes bloqueados.</td>
+                </tr>
+                <tr th:each="c : ${clientesBloqueados}">
+                    <td th:text="${c.nombreCliente} + ' ' + ${c.apellidoCliente}">Nombre</td>
+                    <td th:text="${c.correo}">correo</td>
+                    <td th:text="${c.vehiculos != null ? c.vehiculos.size() : 0}">0</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+        <a th:href="@{/admin}" style="font-family:var(--font-mono);font-size:.7rem;color:var(--muted);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='var(--muted)'">← Volver al panel de administración</a>
+
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Vehículo — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+        aside{background:var(--dark);border-right:1px solid var(--border);padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem;}
+        .brand{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.05em;}
+        .brand b{color:var(--accent);}
+        .tag{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);letter-spacing:.2em;margin-top:-.5rem;}
+        nav{display:flex;flex-direction:column;gap:.25rem;}
+        .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border-radius:4px;font-size:.875rem;color:var(--muted);text-decoration:none;transition:background .2s,color .2s;}
+        .nav-item:hover,.nav-item.active{background:rgba(230,57,70,.08);color:var(--white);}
+        .nav-item.active{border-left:2px solid var(--accent);padding-left:.6rem;}
+        .sidebar-footer{margin-top:auto;}
+        .user-chip{background:var(--card);border:1px solid var(--border);padding:.75rem;border-radius:4px;font-size:.8rem;margin-bottom:.5rem;}
+        .user-chip .name{font-weight:600;}
+        .user-chip .email{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);}
+        .logout-btn{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:.85rem;cursor:pointer;padding:.65rem .85rem;width:100%;text-align:left;display:flex;align-items:center;gap:.75rem;border-radius:4px;transition:background .2s,color .2s;}
+        .logout-btn:hover{background:rgba(230,57,70,.08);color:var(--accent);}
+        main{padding:2.5rem;overflow-y:auto;}
+        .page-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.75rem;}
+        .page-title{font-family:var(--font-display);font-size:2.5rem;letter-spacing:.03em;margin-bottom:2rem;}
+        .page-title span{color:var(--accent);}
+        .form-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2rem;max-width:700px;}
+        .form-section{margin-bottom:2rem;}
+        .form-section-title{font-family:var(--font-mono);font-size:.65rem;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+        .form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1rem;}
+        .form-group{display:flex;flex-direction:column;gap:.4rem;}
+        .form-group.full{grid-column:1/-1;}
+        label{font-family:var(--font-mono);font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+        input,select{background:var(--dark);border:1px solid var(--border);color:var(--white);padding:.75rem .85rem;font-family:var(--font-body);font-size:.9rem;border-radius:3px;outline:none;transition:border-color .2s;width:100%;}
+        input:focus,select:focus{border-color:var(--teal);}
+        select option{background:var(--dark);}
+        .sensors-preview{background:var(--dark);border:1px solid var(--border);border-radius:3px;padding:1rem;margin-top:1rem;}
+        .sensors-preview-title{font-family:var(--font-mono);font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
+        .sensor-item{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid var(--border);}
+        .sensor-item:last-child{border-bottom:none;}
+        .sensor-dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--teal);flex-shrink:0;}
+        .sensor-name{font-family:var(--font-mono);font-size:.75rem;color:var(--white);}
+        .sensor-type{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-left:auto;}
+        .form-actions{display:flex;gap:1rem;margin-top:2rem;}
+        .btn-submit{background:var(--accent);color:#fff;border:none;padding:.85rem 2rem;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;cursor:pointer;border-radius:3px;transition:opacity .2s;}
+        .btn-submit:hover{opacity:.85;}
+        .btn-cancel{background:none;border:1px solid var(--border);color:var(--muted);padding:.85rem 2rem;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;cursor:pointer;border-radius:3px;text-decoration:none;transition:border-color .2s,color .2s;}
+        .btn-cancel:hover{border-color:var(--white);color:var(--white);}
+        .info-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);color:var(--teal);padding:.5rem .85rem;border-radius:3px;font-family:var(--font-mono);font-size:.7rem;margin-bottom:1.5rem;}
+    </style>
+</head>
+<body>
+
+<aside>
+    <div>
+        <div class="brand">Auto <b>Sen</b></div>
+        <div class="tag">// monitoreo vehicular</div>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}" class="nav-item">🏠 Dashboard</a>
+        <a th:href="@{/vehiculos}" class="nav-item">🚗 Mis Vehículos</a>
+        <a th:href="@{/vehiculos/crear}" class="nav-item active">➕ Agregar Vehículo</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="name">Mi cuenta</div>
+            <div class="email"></div>
+        </div>
+        <form method="post" th:action="@{/logout}">
+            <button type="submit" class="logout-btn">🚪 Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
+
+<main>
+    <div class="page-tag">// Nuevo registro</div>
+    <h1 class="page-title">AGREGAR <span>VEHÍCULO</span></h1>
+
+    <div class="info-badge">
+        📡 Se crearán 4 sensores automáticamente al registrar el vehículo
+    </div>
+
+    <div class="form-card">
+        <form method="post" th:action="@{/vehiculos/crear}">
+
+            <div class="form-section">
+                <div class="form-section-title">Información del vehículo</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del vehículo</label>
+                        <input type="text" name="nombreVehiculo" placeholder="Ej: Mi Corolla" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" name="marca" placeholder="Ej: Toyota" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Año / Modelo</label>
+                        <input type="number" name="modelo" placeholder="Ej: 2022" min="1990" max="2030" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="text" name="color" placeholder="Ej: Negro" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Datos de placa</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Placa</label>
+                        <input type="text" name="placa" placeholder="Ej: ABC-123" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de placa</label>
+                        <select name="tipoPlaca" required>
+                            <option value="" disabled selected>Selecciona...</option>
+                            <option value="particular">Particular</option>
+                            <option value="publico">Público</option>
+                            <option value="oficial">Oficial</option>
+                            <option value="diplomatico">Diplomático</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Sensores que se generarán automáticamente</div>
+                <div class="sensors-preview">
+                    <div class="sensor-item">
+                        <div class="sensor-dot"></div>
+                        <span class="sensor-name">Sensor de Flujo de Masa de Aire</span>
+                        <span class="sensor-type">MAF</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot"></div>
+                        <span class="sensor-name">Sensor de Oxígeno</span>
+                        <span class="sensor-type">O2</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot"></div>
+                        <span class="sensor-name">Sensor de Temperatura del Refrigerante</span>
+                        <span class="sensor-type">ECT</span>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-dot"></div>
+                        <span class="sensor-name">Sensor de Presión Absoluta del Colector</span>
+                        <span class="sensor-type">MAP</span>
+                    </div>
+                </div>
+            </div>
+<div th:if="${error}"
+     style="background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);color:#e63946;padding:.85rem 1rem;border-radius:3px;font-family:var(--font-mono);font-size:.8rem;margin-bottom:1.5rem;max-width:700px;">
+    ⚠ <span th:text="${error}"></span>
+</div>
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">✓ REGISTRAR VEHÍCULO</button>
+                <a th:href="@{/vehiculos}" class="btn-cancel">CANCELAR</a>
+            </div>
+        </form>
+    </div>
+</main>
+
+</body>
+</html>

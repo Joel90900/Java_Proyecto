@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
+        .error-code{font-family:var(--font-display);font-size:10rem;line-height:1;color:var(--accent);opacity:.15;position:absolute;user-select:none;}
+        .content{position:relative;z-index:1;}
+        .tag{font-family:var(--font-mono);font-size:.7rem;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem;background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);padding:.4rem 1rem;border-radius:20px;display:inline-block;}
+        h1{font-family:var(--font-display);font-size:4rem;letter-spacing:.03em;margin-bottom:.5rem;}
+        h1 span{color:var(--accent);}
+        .message{color:var(--muted);font-size:1rem;margin-bottom:2.5rem;max-width:400px;line-height:1.6;}
+        .actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-primary{background:var(--accent);color:#fff;padding:.75rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;transition:opacity .2s;}
+        .btn-primary:hover{opacity:.85;}
+        .btn-secondary{background:none;border:1px solid var(--border);color:var(--white);padding:.75rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;transition:border-color .2s;}
+        .btn-secondary:hover{border-color:var(--white);}
+        .error-detail{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:3rem;background:var(--card);border:1px solid var(--border);padding:.75rem 1.5rem;border-radius:3px;}
+    </style>
+</head>
+<body>
+
+    <div class="error-code" th:text="${status}">404</div>
+
+    <div class="content">
+        <div class="tag">// error del sistema</div>
+
+        <h1 th:switch="${status}">
+            <th:block th:case="404">PÁGINA <span>NO ENCONTRADA</span></th:block>
+            <th:block th:case="403">ACCESO <span>DENEGADO</span></th:block>
+            <th:block th:case="500">ERROR <span>DEL SERVIDOR</span></th:block>
+            <th:block th:case="*">ALGO SALIÓ <span>MAL</span></th:block>
+        </h1>
+
+        <p class="message" th:switch="${status}">
+            <th:block th:case="404">La página que buscas no existe o fue movida.</th:block>
+            <th:block th:case="403">No tienes permisos para acceder a esta sección.</th:block>
+            <th:block th:case="500">Ocurrió un error interno. Intenta de nuevo más tarde.</th:block>
+            <th:block th:case="*">Ocurrió un error inesperado en el sistema.</th:block>
+        </p>
+
+        <div class="actions">
+            <a href="/" class="btn-primary">← VOLVER AL INICIO</a>
+            <a href="/dashboard" class="btn-secondary">IR AL DASHBOARD</a>
+        </div>
+
+        <div class="error-detail">
+            <span th:text="'Código: ' + ${status}"></span>
+            &nbsp;·&nbsp;
+            <span th:text="${error}"></span>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensores — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+        aside{background:var(--dark);border-right:1px solid var(--border);padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem;}
+        .brand{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.05em;}
+        .brand b{color:var(--accent);}
+        .tag{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);letter-spacing:.2em;margin-top:-.5rem;}
+        nav{display:flex;flex-direction:column;gap:.25rem;}
+        .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border-radius:4px;font-size:.875rem;color:var(--muted);text-decoration:none;transition:background .2s,color .2s;}
+        .nav-item:hover,.nav-item.active{background:rgba(230,57,70,.08);color:var(--white);}
+        .nav-item.active{border-left:2px solid var(--accent);padding-left:.6rem;}
+        .sidebar-footer{margin-top:auto;}
+        .user-chip{background:var(--card);border:1px solid var(--border);padding:.75rem;border-radius:4px;font-size:.8rem;margin-bottom:.5rem;}
+        .user-chip .name{font-weight:600;}
+        .user-chip .email{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);}
+        .logout-btn{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:.85rem;cursor:pointer;padding:.65rem .85rem;width:100%;text-align:left;display:flex;align-items:center;gap:.75rem;border-radius:4px;transition:background .2s,color .2s;}
+        .logout-btn:hover{background:rgba(230,57,70,.08);color:var(--accent);}
+        main{padding:2.5rem;overflow-y:auto;}
+        .page-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:.75rem;}
+        .page-title{font-family:var(--font-display);font-size:2.5rem;letter-spacing:.03em;margin-bottom:2rem;}
+        .page-title span{color:var(--accent);}
+
+        /* Vehículo bloque */
+        .vehiculo-block{background:var(--card);border:1px solid var(--border);border-radius:4px;margin-bottom:2rem;overflow:hidden;}
+        .vehiculo-header{background:var(--dark);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+        .vehiculo-nombre{font-family:var(--font-display);font-size:1.3rem;letter-spacing:.03em;}
+        .vehiculo-meta{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:.2rem;}
+        .vehiculo-placa{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);border:1px solid rgba(46,196,182,.3);background:rgba(46,196,182,.05);padding:.3rem .7rem;border-radius:3px;}
+
+        /* Sensores */
+        .sensores-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;padding:1.5rem;}
+        .sensor-card{background:var(--black);border:1px solid var(--border);border-radius:4px;padding:1.25rem;position:relative;overflow:hidden;}
+        .sensor-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+        .sensor-card.ok::before{background:var(--teal);}
+        .sensor-card.advertencia::before{background:var(--gold);}
+        .sensor-card.falla::before{background:var(--accent);}
+        .sensor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;}
+        .sensor-tipo{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.1em;background:var(--dark);border:1px solid var(--border);padding:.2rem .5rem;border-radius:3px;}
+        .sensor-badge{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;padding:.2rem .6rem;border-radius:20px;}
+        .sensor-badge.ok{background:rgba(46,196,182,.1);color:var(--teal);}
+        .sensor-badge.advertencia{background:rgba(244,162,97,.1);color:var(--gold);}
+        .sensor-badge.falla{background:rgba(230,57,70,.1);color:var(--accent);}
+        .sensor-nombre{font-size:.9rem;font-weight:600;margin-bottom:.3rem;}
+        .sensor-dano{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:1rem;}
+        .sensor-nivel-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;}
+        .sensor-nivel-text{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);}
+        .sensor-nivel-value{font-family:var(--font-display);font-size:1.4rem;}
+        .sensor-nivel-value.ok{color:var(--teal);}
+        .sensor-nivel-value.advertencia{color:var(--gold);}
+        .sensor-nivel-value.falla{color:var(--accent);}
+        .progress-bar{background:var(--border);border-radius:3px;height:6px;overflow:hidden;}
+        .progress-fill{height:100%;border-radius:3px;transition:width .5s;}
+        .progress-fill.ok{background:var(--teal);}
+        .progress-fill.advertencia{background:var(--gold);}
+        .progress-fill.falla{background:var(--accent);}
+
+        /* Empty */
+        .empty-state{text-align:center;padding:4rem 2rem;color:var(--muted);}
+        .empty-state h2{font-family:var(--font-display);font-size:1.8rem;margin-bottom:.75rem;color:var(--white);}
+        .btn-add{background:var(--accent);color:#fff;padding:.75rem 1.5rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.08em;transition:opacity .2s;display:inline-block;margin-top:1rem;}
+        .btn-add:hover{opacity:.85;}
+
+        /* Leyenda */
+        .leyenda{display:flex;gap:1.5rem;margin-bottom:1.5rem;font-family:var(--font-mono);font-size:.7rem;}
+        .leyenda-item{display:flex;align-items:center;gap:.4rem;}
+        .leyenda-dot{width:.5rem;height:.5rem;border-radius:50%;}
+    </style>
+</head>
+<body>
+
+<aside>
+    <div>
+        <div class="brand">Auto <b>Sen</b></div>
+        <div class="tag">// monitoreo vehicular</div>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}" class="nav-item">🏠 Dashboard</a>
+        <a th:href="@{/vehiculos}" class="nav-item">🚗 Mis Vehículos</a>
+        <a th:href="@{/vehiculos/crear}" class="nav-item">➕ Agregar Vehículo</a>
+        <a th:href="@{/sensores}" class="nav-item active">📡 Sensores</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="name" th:text="${cliente.nombreCliente} + ' ' + ${cliente.apellidoCliente}"></div>
+            <div class="email" th:text="${cliente.correo}"></div>
+        </div>
+        <form method="post" th:action="@{/logout}">
+            <button type="submit" class="logout-btn">🚪 Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
+
+<main>
+    <div class="page-tag">// Estado en tiempo real</div>
+    <h1 class="page-title">MIS <span>SENSORES</span></h1>
+
+    <div class="leyenda">
+        <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--teal)"></div>
+            <span style="color:var(--teal)">OK (0-39%)</span>
+        </div>
+        <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--gold)"></div>
+            <span style="color:var(--gold)">ADVERTENCIA (40-69%)</span>
+        </div>
+        <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--accent)"></div>
+            <span style="color:var(--accent)">FALLA (70-100%)</span>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(vehiculos)}" class="empty-state">
+        <h2>SIN VEHÍCULOS REGISTRADOS</h2>
+        <p>Registra un vehículo para ver sus sensores.</p>
+        <a th:href="@{/vehiculos/crear}" class="btn-add">+ AGREGAR VEHÍCULO</a>
+    </div>
+
+    <div th:each="v : ${vehiculos}">
+        <div class="vehiculo-block">
+            <div class="vehiculo-header">
+                <div>
+                    <div class="vehiculo-nombre" th:text="'🚗 ' + ${v.nombreVehiculo} + ' — ' + ${v.marca}"></div>
+                    <div class="vehiculo-meta" th:text="'Color: ' + ${v.color}"></div>
+                </div>
+                <span class="vehiculo-placa" th:text="${v.placa}"></span>
+            </div>
+
+            <div class="sensores-grid" th:if="${v.sensores != null and not #lists.isEmpty(v.sensores)}">
+                <div th:each="s : ${v.sensores}" class="sensor-card"
+                     th:classappend="${s.nivel >= 70} ? ' falla' : (${s.nivel >= 40} ? ' advertencia' : ' ok')">
+
+                    <div class="sensor-top">
+                        <span class="sensor-tipo" th:text="${s.tipoSensor}"></span>
+                        <span class="sensor-badge"
+                              th:classappend="${s.nivel >= 70} ? ' falla' : (${s.nivel >= 40} ? ' advertencia' : ' ok')"
+                              th:text="${s.nivel >= 70} ? 'FALLA' : (${s.nivel >= 40} ? 'ADVERTENCIA' : 'OK')">
+                        </span>
+                    </div>
+
+                    <div class="sensor-nombre" th:text="${s.nombreSensor}"></div>
+                    <div class="sensor-dano" th:text="'Tipo daño: ' + ${s.tipoDano}"></div>
+
+                    <div class="sensor-nivel-label">
+                        <span class="sensor-nivel-text">NIVEL DE DESGASTE</span>
+                        <span class="sensor-nivel-value"
+                              th:classappend="${s.nivel >= 70} ? ' falla' : (${s.nivel >= 40} ? ' advertencia' : ' ok')"
+                              th:text="${s.nivel} + '%'">
+                        </span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"
+                             th:classappend="${s.nivel >= 70} ? ' falla' : (${s.nivel >= 40} ? ' advertencia' : ' ok')"
+                             th:style="'width:' + ${s.nivel} + '%'">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${v.sensores == null or #lists.isEmpty(v.sensores)}"
+                 style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;">
+                Este vehículo no tiene sensores asignados.
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>
