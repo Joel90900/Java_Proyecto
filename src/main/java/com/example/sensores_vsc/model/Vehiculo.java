@@ -30,6 +30,9 @@ public class Vehiculo {
     @Column(name = "Tipo_placa")
     private String tipoPlaca;
 
+    @Column(name = "Elm_mac")
+    private String elmMac;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Id_cliente")
     private Cliente cliente;
@@ -51,6 +54,8 @@ public class Vehiculo {
     public void setPlaca(String placa) { this.placa = placa; }
     public String getTipoPlaca() { return tipoPlaca; }
     public void setTipoPlaca(String tipoPlaca) { this.tipoPlaca = tipoPlaca; }
+    public String getElmMac() { return elmMac; }
+    public void setElmMac(String elmMac) { this.elmMac = elmMac; }
     public Cliente getCliente() { return cliente; }
     public void setCliente(Cliente cliente) { this.cliente = cliente; }
     public List<Sensor> getSensores() { return sensores; }
