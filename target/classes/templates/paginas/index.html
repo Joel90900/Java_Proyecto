@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoSen — Sistema de Monitoreo Vehicular</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{
+            --black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;
+            --accent:#030853;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;
+            --font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;
+        }
+        html{scroll-behavior:smooth;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+        a{color:inherit;}
+
+        /* NAV */
+        nav{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 3rem;border-bottom:1px solid var(--border);position:relative;z-index:10;}
+        .nav-logo{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.05em;text-decoration:none;color:var(--white);}
+        .nav-logo b{color:var(--teal);}
+        .nav-links{display:flex;gap:1rem;align-items:center;}
+        .btn-outline{background:none;border:1px solid var(--border);color:var(--white);padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:border-color .2s,color .2s;}
+        .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+        .btn-filled{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:opacity .2s;}
+        .btn-filled:hover{opacity:.85;}
+
+        /* HERO */
+        .hero{display:flex;align-items:center;justify-content:space-between;gap:3rem;padding:4rem 3rem;max-width:1400px;margin:0 auto;flex-wrap:wrap;}
+        .hero-content{flex:1;min-width:320px;max-width:560px;}
+        .hero-eyebrow{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);padding:.4rem 1rem;border-radius:20px;display:inline-block;}
+        .hero-title{font-family:var(--font-display);font-size:4.5rem;letter-spacing:.03em;line-height:.95;margin-bottom:1.5rem;}
+        .line-accent{color:var(--accent);-webkit-text-stroke:1px var(--teal);}
+        .line-outline{color:transparent;-webkit-text-stroke:1.5px var(--white);}
+        .hero-desc{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;}
+        .hero-ctas{margin-bottom:3rem;}
+        .btn-primary{background:var(--accent);color:#fff;padding:.85rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.1em;transition:opacity .2s,transform .2s;display:inline-block;}
+        .btn-primary:hover{opacity:.85;transform:translateY(-2px);}
+        .hero-stats{display:flex;gap:2.5rem;}
+        .hero-stats .stat-num{font-family:var(--font-display);font-size:2.2rem;color:var(--teal);}
+        .hero-stats .stat-num span{color:var(--gold);}
+        .hero-stats .stat-label{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:.25rem;}
+
+        /* HERO VISUAL */
+        .hero-visual{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;flex:1;min-width:320px;}
+        .car-diagram{position:relative;width:480px;max-width:100%;height:340px;}
+        .car-body{width:100%;height:100%;}
+
+        .sensor-dot{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(3,8,83,.25),0 0 20px rgba(3,8,83,.6);cursor:pointer;transition:transform .2s;animation:sensorBlink 2s ease-in-out infinite;}
+        .sensor-dot:nth-child(2){animation-delay:.4s;}
+        .sensor-dot:nth-child(3){animation-delay:.8s;background:var(--gold);box-shadow:0 0 0 4px rgba(244,162,97,.25),0 0 20px rgba(244,162,97,.6);}
+        .sensor-dot:nth-child(4){animation-delay:1.2s;}
+        .sensor-dot:nth-child(5){animation-delay:.2s;background:#2ec4b6;box-shadow:0 0 0 4px rgba(46,196,182,.25),0 0 20px rgba(46,196,182,.6);}
+        @keyframes sensorBlink{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.3);}}
+        .sensor-dot:hover{transform:scale(1.6) !important;}
+
+        .hud-card,.hud-card2{position:absolute;background:rgba(22,22,30,.9);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;backdrop-filter:blur(6px);}
+        .hud-card{bottom:0;left:-10px;}
+        .hud-title{font-family:var(--font-mono);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;}
+        .hud-value{font-family:var(--font-display);font-size:1.8rem;color:var(--white);line-height:1;}
+        .hud-sub{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);margin-top:.3rem;}
+        .hud-card2{top:0;right:-10px;display:flex;flex-direction:column;gap:.4rem;}
+        .status-row{display:flex;align-items:center;gap:.5rem;}
+        .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+        .status-dot.ok{background:var(--teal);}
+        .status-dot.warn{background:var(--gold);}
+        .status-dot.err{background:var(--accent);box-shadow:0 0 6px rgba(3,8,83,.8);}
+        .status-text{font-family:var(--font-mono);font-size:.65rem;color:var(--white);white-space:nowrap;}
+
+        /* MARQUEE */
+        .marquee-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--dark);overflow:hidden;padding:.9rem 0;}
+        .marquee-inner{display:flex;gap:3rem;width:max-content;animation:marqueeScroll 28s linear infinite;}
+        .marquee-item{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+        .marquee-item::after{content:'◆';color:var(--teal);margin-left:3rem;}
+        @keyframes marqueeScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+        /* SECTION SHARED */
+        .section{padding:5rem 3rem;max-width:1200px;margin:0 auto;}
+        .section-header{text-align:center;margin-bottom:3rem;}
+        .section-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem;}
+        .section-title{font-family:var(--font-display);font-size:2.75rem;letter-spacing:.03em;line-height:1;}
+
+        /* SERVICES */
+        .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
+        .service-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2rem;position:relative;transition:border-color .2s,transform .2s;}
+        .service-card:hover{border-color:var(--teal);transform:translateY(-3px);}
+        .service-num{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:1rem;}
+        .service-icon{font-size:1.8rem;margin-bottom:1rem;}
+        .service-title{font-family:var(--font-display);font-size:1.3rem;letter-spacing:.03em;margin-bottom:.75rem;color:var(--white);}
+        .service-desc{font-size:.875rem;color:var(--muted);line-height:1.6;}
+
+        /* HOW SECTION (new) */
+        .how-section{padding:5rem 3rem;background:var(--dark);}
+        .how-section .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto;}
+        .how-section .step{text-align:center;padding:1.5rem;}
+        .how-section .step-num{font-family:var(--font-display);font-size:3.5rem;color:rgba(3,8,83,.35);line-height:1;margin-bottom:.5rem;}
+        .how-section .step-title{font-family:var(--font-display);font-size:1.1rem;letter-spacing:.05em;margin-bottom:.5rem;}
+        .how-section .step-desc{font-size:.85rem;color:var(--muted);line-height:1.6;}
+
+        /* STATS BAR */
+        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+        .stat{background:var(--black);padding:2rem;text-align:center;}
+        .stat-num{font-family:var(--font-display);font-size:3rem;color:var(--teal);}
+        .stat-lbl{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:.5rem;}
+
+        /* CTA */
+        .cta{background:var(--dark);border-top:1px solid var(--border);padding:5rem 3rem;text-align:center;}
+        .cta h2{font-family:var(--font-display);font-size:3rem;letter-spacing:.03em;margin-bottom:1rem;}
+        .cta h2 span{color:var(--accent);-webkit-text-stroke:1px var(--teal);}
+        .cta p{color:var(--muted);margin-bottom:2.5rem;font-size:1rem;}
+        .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .hero-btn-primary{background:var(--accent);color:#fff;padding:.85rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.1em;transition:opacity .2s;}
+        .hero-btn-primary:hover{opacity:.85;}
+
+        /* FOOTER */
+        footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);flex-wrap:wrap;gap:.5rem;}
+        footer b{color:var(--teal);}
+
+        /* REDUCED MOTION */
+        @media (prefers-reduced-motion: reduce){
+            .sensor-dot{animation:none;}
+            .marquee-inner{animation:none;}
+        }
+
+        /* RESPONSIVE */
+        @media (max-width:900px){
+            .hero-title{font-size:3.2rem;}
+            .hero{padding:3rem 1.5rem;}
+            nav{padding:1.25rem 1.5rem;}
+            .section,.how-section{padding:3.5rem 1.5rem;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="/" class="nav-logo">Auto<b>Sen</b></a>
+        <div class="nav-links">
+            <a th:href="@{/login}" class="btn-outline">Iniciar Sesión</a>
+            <a th:href="@{/register}" class="btn-filled">Registrarse</a>
+            <a th:href="@{/nosotros}" class="btn-outline">Nosotros</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <p class="hero-eyebrow">Sistema de Diagnóstico Vehicular</p>
+            <h1 class="hero-title">
+                PROTEGE<br>
+                <span class="line-accent">TU</span><br>
+                <span class="line-outline">VEHÍCULO</span>
+            </h1>
+            <p class="hero-desc">
+                Monitoreo inteligente de sensores automotrices en tiempo real.
+                Detecta fallas antes de que ocurran y mantén tu vehículo
+                siempre en óptimas condiciones.
+            </p>
+            <div class="hero-ctas">
+                <a th:href="@{/register}" class="btn-primary">Comenzar ahora</a>
+            </div>
+            <div class="hero-stats">
+                <div>
+                    <div class="stat-num">98<span>%</span></div>
+                    <div class="stat-label">Precisión</div>
+                </div>
+                <div>
+                    <div class="stat-num">24<span>h</span></div>
+                    <div class="stat-label">Monitoreo</div>
+                </div>
+                <div>
+                    <div class="stat-num">+50<span>K</span></div>
+                    <div class="stat-label">Vehículos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HERO VISUAL — Car diagram with sensor dots -->
+        <div class="hero-visual">
+            <div class="car-diagram">
+                <svg class="car-body" viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="240" cy="260" rx="210" ry="18" fill="rgba(3,8,83,0.07)"/>
+                    <!-- Car body -->
+                    <path d="M 60 200 L 60 155 Q 65 130 100 115 L 160 90 Q 185 65 240 62 Q 295 65 320 90 L 380 115 Q 415 130 420 155 L 420 200 Z"
+                          fill="#16161e" stroke="#2a2a38" stroke-width="1.5"/>
+                    <!-- Roof -->
+                    <path d="M 140 115 Q 160 72 240 68 Q 320 72 340 115 Z"
+                          fill="#1e1e28" stroke="#2a2a38" stroke-width="1"/>
+                    <!-- Windows -->
+                    <path d="M 155 112 L 170 78 L 233 74 L 233 112 Z" fill="#0d1b2a" stroke="#334" stroke-width="1" opacity=".8"/>
+                    <path d="M 247 74 L 310 78 L 325 112 L 247 112 Z" fill="#0d1b2a" stroke="#334" stroke-width="1" opacity=".8"/>
+                    <!-- Wheels -->
+                    <circle cx="130" cy="208" r="40" fill="#0a0a0c" stroke="#2a2a38" stroke-width="2"/>
+                    <circle cx="130" cy="208" r="26" fill="#111116" stroke="#333" stroke-width="1.5"/>
+                    <circle cx="130" cy="208" r="10" fill="#1e1e28" stroke="#444" stroke-width="1"/>
+                    <circle cx="350" cy="208" r="40" fill="#0a0a0c" stroke="#2a2a38" stroke-width="2"/>
+                    <circle cx="350" cy="208" r="26" fill="#111116" stroke="#333" stroke-width="1.5"/>
+                    <circle cx="350" cy="208" r="10" fill="#1e1e28" stroke="#444" stroke-width="1"/>
+                    <!-- Headlight -->
+                    <ellipse cx="66" cy="163" rx="10" ry="7" fill="rgba(244,162,97,.6)" filter="url(#glow)"/>
+                    <!-- Taillight -->
+                    <ellipse cx="415" cy="163" rx="10" ry="7" fill="rgba(3,8,83,0.7)"/>
+                    <!-- Underline -->
+                    <line x1="60" y1="200" x2="420" y2="200" stroke="#2a2a38" stroke-width="1.5"/>
+                    <!-- Sensor lines -->
+                    <line x1="130" y1="168" x2="130" y2="155" stroke="rgba(3,8,83,0.4)" stroke-width="1" stroke-dasharray="3,3"/>
+                    <line x1="240" y1="155" x2="240" y2="62" stroke="rgba(244,162,97,.3)" stroke-width="1" stroke-dasharray="3,3"/>
+                    <line x1="350" y1="168" x2="350" y2="155" stroke="rgba(46,196,182,.4)" stroke-width="1" stroke-dasharray="3,3"/>
+                    <defs>
+                        <filter id="glow"><feGaussianBlur stdDeviation="3" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    </defs>
+                </svg>
+
+                <!-- Sensor dots (positioned over SVG) -->
+                <div class="sensor-dot" style="top:52%; left:24%;" title="Motor"></div>
+                <div class="sensor-dot" style="top:35%; left:49%;" title="Transmisión"></div>
+                <div class="sensor-dot" style="top:52%; left:68%;" title="Frenos"></div>
+                <div class="sensor-dot" style="top:63%; left:12%;" title="Rueda D"></div>
+                <div class="sensor-dot" style="top:63%; left:69%;" title="Rueda T"></div>
+
+                <!-- HUD Card bottom-left -->
+                <div class="hud-card">
+                    <div class="hud-title">Temperatura Motor</div>
+                    <div class="hud-value">87°C</div>
+                    <div class="hud-sub">Normal · Actualizado ahora</div>
+                </div>
+
+                <!-- HUD Card top-right -->
+                <div class="hud-card2">
+                    <div class="status-row"><span class="status-dot ok"></span><span class="status-text">Motor — OK</span></div>
+                    <div class="status-row"><span class="status-dot warn"></span><span class="status-text">Frenos — Revisar</span></div>
+                    <div class="status-row"><span class="status-dot err"></span><span class="status-text">Sensor O2 — Falla</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee-bar">
+        <div class="marquee-inner">
+            <span class="marquee-item">Diagnóstico en Tiempo Real</span>
+            <span class="marquee-item">Alertas Predictivas</span>
+            <span class="marquee-item">Historial de Sensores</span>
+            <span class="marquee-item">Monitoreo 24/7</span>
+            <span class="marquee-item">Reportes Detallados</span>
+            <span class="marquee-item">Múltiples Vehículos</span>
+            <!-- Duplicado para que el scroll continuo (translateX -50%) no deje huecos -->
+            <span class="marquee-item">Diagnóstico en Tiempo Real</span>
+            <span class="marquee-item">Alertas Predictivas</span>
+            <span class="marquee-item">Historial de Sensores</span>
+            <span class="marquee-item">Monitoreo 24/7</span>
+            <span class="marquee-item">Reportes Detallados</span>
+            <span class="marquee-item">Múltiples Vehículos</span>
+        </div>
+    </div>
+
+    <!-- SERVICES -->
+    <section class="section" id="servicios">
+        <div class="section-header">
+            <div class="section-tag">Lo que ofrecemos</div>
+            <h2 class="section-title">NUESTROS<br>SERVICIOS</h2>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-num">01</div>
+                <div class="service-icon">🔍</div>
+                <h3 class="service-title">Diagnóstico Predictivo</h3>
+                <p class="service-desc">Algoritmos de análisis que detectan patrones de desgaste antes de que se conviertan en fallas críticas.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-num">02</div>
+                <div class="service-icon">📡</div>
+                <h3 class="service-title">Sensores en Tiempo Real</h3>
+                <p class="service-desc">Lectura continua de parámetros vehiculares: temperatura, presión, voltaje, gases y más.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-num">03</div>
+                <div class="service-icon">🚨</div>
+                <h3 class="service-title">Alertas Inteligentes</h3>
+                <p class="service-desc">Notificaciones inmediatas al detectar anomalías, clasificadas por severidad y tipo de sensor afectado.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-num">04</div>
+                <div class="service-icon">📊</div>
+                <h3 class="service-title">Reportes Detallados</h3>
+                <p class="service-desc">Historial completo de cada vehículo y sensor, con visualizaciones para técnicos y propietarios.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-num">05</div>
+                <div class="service-icon">🚗</div>
+                <h3 class="service-title">Multi-Vehículo</h3>
+                <p class="service-desc">Administra flotas completas desde una sola cuenta. Filtra por placa, marca, modelo y tipo.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-num">06</div>
+                <div class="service-icon">🛡️</div>
+                <h3 class="service-title">Panel de Administración</h3>
+                <p class="service-desc">Gestión centralizada de usuarios, vehículos y sensores con roles y permisos diferenciados.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-section" id="como-funciona">
+        <div class="section-header">
+            <div class="section-tag">Proceso</div>
+            <h2 class="section-title">¿CÓMO<br>FUNCIONA?</h2>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <h3 class="step-title">Registra tu vehículo</h3>
+                <p class="step-desc">Ingresa los datos de tu carro: marca, modelo, placa y tipo. El sistema lo identifica de manera única.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <h3 class="step-title">Vincula los sensores</h3>
+                <p class="step-desc">Se generan automáticamente 4 sensores principales asociados a tu vehículo.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <h3 class="step-title">Monitoreo continuo</h3>
+                <p class="step-desc">El sistema analiza los datos 24/7 y clasifica el estado de cada sensor automáticamente.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <h3 class="step-title">Recibe alertas</h3>
+                <p class="step-desc">Si se detecta una anomalía, sabrás exactamente qué tipo de daño revisar y en qué sensor.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num">4</div>
+            <div class="stat-lbl">Sensores por vehículo</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">3</div>
+            <div class="stat-lbl">Niveles de alerta</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">24/7</div>
+            <div class="stat-lbl">Monitoreo continuo</div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <section class="cta">
+        <h2>EMPIEZA A <span>MONITOREAR</span></h2>
+        <p>Crea tu cuenta gratis y conecta tu primer vehículo en menos de 2 minutos.</p>
+        <div class="hero-btns">
+            <a th:href="@{/register}" class="hero-btn-primary">CREAR CUENTA GRATIS</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <span>Auto <b>Sen</b> // Sistema de Monitoreo Vehicular</span>
+        <span style="font-family:var(--font-mono);font-size:.65rem;">Spring Boot + Java</span>
+    </footer>
+
+</body>
+</html>

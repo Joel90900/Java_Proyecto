@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+        aside{background:var(--dark);border-right:1px solid var(--border);padding:2rem 1.5rem;display:flex;flex-direction:column;gap:2rem;}
+        .brand{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.05em;}
+        .brand b{color:var(--accent);}
+        .tag{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);letter-spacing:.2em;margin-top:-.5rem;}
+        nav{display:flex;flex-direction:column;gap:.25rem;}
+        .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border-radius:4px;font-size:.875rem;color:var(--muted);text-decoration:none;transition:background .2s,color .2s;}
+        .nav-item:hover,.nav-item.active{background:rgba(230,57,70,.08);color:var(--white);}
+        .nav-item.active{border-left:2px solid var(--accent);padding-left:.6rem;}
+        .sidebar-footer{margin-top:auto;}
+        .user-chip{background:var(--card);border:1px solid var(--border);padding:.75rem;border-radius:4px;font-size:.8rem;margin-bottom:.5rem;}
+        .user-chip .name{font-weight:600;}
+        .user-chip .email{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);}
+        .logout-btn{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:.85rem;cursor:pointer;padding:.65rem .85rem;width:100%;text-align:left;display:flex;align-items:center;gap:.75rem;border-radius:4px;transition:background .2s,color .2s;}
+        .logout-btn:hover{background:rgba(230,57,70,.08);color:var(--accent);}
+        main{padding:2.5rem;overflow-y:auto;}
+        .page-title{font-family:var(--font-display);font-size:2.5rem;letter-spacing:.03em;}
+        .page-title span{color:var(--teal);}
+        .page-date{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:.25rem;margin-bottom:2rem;}
+        .btn-bluetooth{display:flex;align-items:center;gap:.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);color:var(--teal);padding:.6rem 1.2rem;border-radius:4px;font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;cursor:pointer;transition:background .2s;margin-bottom:2rem;}
+        .btn-bluetooth:hover{background:rgba(46,196,182,.2);}
+        .bt-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.5rem;}
+        .stat-card{background:var(--card);border:1px solid var(--border);padding:1.5rem;border-radius:4px;}
+        .stat-label{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5rem;}
+        .stat-value{font-family:var(--font-display);font-size:3rem;line-height:1;}
+        .info-title{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.05em;margin-bottom:1.25rem;}
+        .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:2.5rem;}
+        .info-card{background:var(--card);border:1px solid var(--border);padding:1.5rem;border-radius:4px;display:flex;gap:1rem;align-items:flex-start;}
+        .info-icon{font-size:1.8rem;flex-shrink:0;}
+        .info-name{font-weight:700;font-size:.95rem;margin-bottom:.3rem;}
+        .info-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+        .steps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;}
+        .step-card{background:var(--card);border:1px solid var(--border);padding:1.5rem;border-radius:4px;}
+        .step-num{font-family:var(--font-display);font-size:3rem;color:rgba(230,57,70,.2);line-height:1;margin-bottom:.5rem;}
+        .step-title{font-weight:700;font-size:.95rem;margin-bottom:.4rem;}
+        .step-desc{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    </style>
+</head>
+<body>
+
+<aside>
+    <div>
+        <div class="brand">Auto <b>Sen</b></div>
+        <div class="tag">// monitoreo vehicular</div>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}" class="nav-item active">🏠 Dashboard</a>
+        <a th:href="@{/vehiculos}" class="nav-item">🚗 Mis Vehículos</a>
+        <a th:href="@{/vehiculos/crear}" class="nav-item">➕ Agregar Vehículo</a>
+        <a th:href="@{/sensores}" class="nav-item">📡 Sensores</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-chip">
+            <div class="name" th:text="${cliente.nombreCliente} + ' ' + ${cliente.apellidoCliente}"></div>
+            <div class="email" th:text="${cliente.correo}"></div>
+        </div>
+        <form method="post" th:action="@{/logout}">
+            <button type="submit" class="logout-btn">🚪 Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
+
+<main>
+    <button class="btn-bluetooth">
+        <div class="bt-dot"></div>
+        🔵 CONECTAR BLUETOOTH
+    </button>
+
+    <h1 class="page-title">HOLA, <span th:text="${cliente.nombreCliente}"></span></h1>
+    <p class="page-date" th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd MMMM yyyy')}"></p>
+
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top:3px solid var(--teal);">
+            <div class="stat-label">Vehículos</div>
+            <div class="stat-value" style="color:var(--teal);" th:text="${vehiculos.size()}">0</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #52b788;">
+            <div class="stat-label">Sensores OK</div>
+            <div class="stat-value" style="color:#52b788;" th:text="${sensoresOk}">0</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid var(--gold);">
+            <div class="stat-label">Advertencias</div>
+            <div class="stat-value" style="color:var(--gold);" th:text="${advertencias}">0</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid var(--accent);">
+            <div class="stat-label">Fallas</div>
+            <div class="stat-value" style="color:var(--accent);" th:text="${fallas}">0</div>
+        </div>
+    </div>
+
+    <p class="info-title">¿QUÉ PUEDES HACER?</p>
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon">🚗</div>
+            <div>
+                <div class="info-name">Gestión de Vehículos</div>
+                <div class="info-desc">Registra y administra todos tus vehículos en un solo lugar.</div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">📡</div>
+            <div>
+                <div class="info-name">Monitoreo de Sensores</div>
+                <div class="info-desc">Visualiza el estado de cada sensor en tiempo real.</div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">🔵</div>
+            <div>
+                <div class="info-name">Conexión Bluetooth</div>
+                <div class="info-desc">Conecta tu dispositivo vía Bluetooth para sincronizar los datos.</div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-icon">🚨</div>
+            <div>
+                <div class="info-name">Alertas Inteligentes</div>
+                <div class="info-desc">Recibe notificaciones cuando un sensor detecta algo fuera de lo normal.</div>
+            </div>
+        </div>
+    </div>
+
+    <p class="info-title">¿CÓMO FUNCIONA?</p>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num">01</div>
+            <div class="step-title">Registra tu vehículo</div>
+            <div class="step-desc">Agrega marca, modelo, placa y color desde el menú lateral.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">02</div>
+            <div class="step-title">Conecta por Bluetooth</div>
+            <div class="step-desc">Conecta el dispositivo OBD2 para recibir datos en tiempo real.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">03</div>
+            <div class="step-title">Monitorea sensores</div>
+            <div class="step-desc">Revisa el estado de cada sensor desde la sección Sensores.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">04</div>
+            <div class="step-title">Actúa ante fallas</div>
+            <div class="step-desc">Sabrás exactamente qué tipo de daño revisar cuando haya una falla.</div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Diagnóstico Técnico - ' + ${cliente.nombreCliente} + ' ' + ${cliente.apellidoCliente} + ' — AutoSen'">Diagnóstico Técnico de Cliente — AutoSen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', Arial, sans-serif;
+            color: #1a1a1e;
+            background-color: #f8f9fa;
+            padding: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .document-container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 45px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .header-doc {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0f203d;
+            padding-bottom: 18px;
+            margin-bottom: 25px;
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f203d;
+        }
+        .brand-title span { color: #2ec4b6; }
+        .doc-subtitle { font-size: 13px; color: #5a6069; margin-top: 4px; }
+
+        .meta-box {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #5a6069;
+        }
+
+        /* Ficha del Cliente */
+        .cliente-info-box {
+            background-color: #f0f3f7;
+            border: 1px solid #dcdfe4;
+            border-left: 4px solid #2ec4b6;
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .info-item .info-lbl { font-size: 10px; font-weight: 700; color: #5a6069; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .info-item .info-val { font-size: 14px; font-weight: 600; color: #0f203d; margin-top: 3px; }
+
+        /* Vehículo Bloque */
+        .vehiculo-card {
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .vehiculo-header {
+            background-color: #0f203d;
+            color: #ffffff;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vehiculo-title { font-size: 14px; font-weight: 700; }
+        .vehiculo-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #2ec4b6; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #e1e4e8;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f7f8fa;
+            color: #5a6069;
+            font-weight: 700;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .badge-optimo { background-color: #e3f9ed; color: #1c7c4c; }
+        .badge-advertencia { background-color: #fff4db; color: #9c6c00; }
+        .badge-falla { background-color: #fde8e8; color: #c52727; }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Firmas de Auditoría */
+        .signatures {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 30px;
+        }
+
+        .sig-block {
+            width: 240px;
+            border-top: 1px solid #8c9099;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 11px;
+            color: #5a6069;
+        }
+        .sig-name { font-weight: 700; color: #0f203d; font-size: 12px; margin-bottom: 2px; }
+
+        /* Botón Flotante de Impresión */
+        .no-print {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn-action {
+            background-color: #0f203d;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-action:hover { background-color: #2ec4b6; color: #0a0a0c; }
+        .btn-action.secondary { background-color: #ffffff; color: #0f203d; border: 1px solid #dcdfe4; }
+
+        @media print {
+            body { background: #ffffff; padding: 0; }
+            .document-container { box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botones de Acción Flotantes -->
+    <div class="no-print">
+        <a th:href="@{/admin/reportes}" class="btn-action secondary">&larr; Volver a Reportes</a>
+        <button onclick="window.print()" class="btn-action">🖨️ Imprimir Diagnóstico</button>
+    </div>
+
+    <div class="document-container">
+        <!-- Encabezado Institucional -->
+        <div class="header-doc">
+            <div>
+                <div class="brand-title">AUTO<span>SEN</span> &bull; DIAGNÓSTICO</div>
+                <div class="doc-subtitle">Ficha Técnica Individual de Telemetría Vehicular</div>
+            </div>
+            <div class="meta-box">
+                <div><strong>REPORTE:</strong> <span th:text="${reporteId}">RPT-CLI-01</span></div>
+                <div><strong>FECHA:</strong> <span th:text="${#temporals.format(fechaGeneracion, 'dd/MM/yyyy HH:mm')}">10/09/2026</span></div>
+                <div><strong>RESPONSABLE:</strong> <span th:text="${adminNombre}">Administrador</span></div>
+            </div>
+        </div>
+
+        <!-- Información General del Cliente -->
+        <div class="cliente-info-box">
+            <div class="info-item">
+                <div class="info-lbl">Cliente Titular</div>
+                <div class="info-val" th:text="${cliente.nombreCliente + ' ' + cliente.apellidoCliente}">Juan Pérez</div>
+            </div>
+            <div class="info-item">
+                <div class="info-lbl">Correo Electrónico</div>
+                <div class="info-val" th:text="${cliente.correo}">cliente@correo.com</div>
+            </div>
+            <div class="info-item">
+                <div class="info-lbl">Estado de Cuenta</div>
+                <div class="info-val">
+                    <span th:text="${cliente.estado.toUpperCase()}" 
+                          th:style="${'activo'.equalsIgnoreCase(cliente.estado) ? 'color:#1c7c4c;' : 'color:#c52727;'}">
+                          ACTIVO
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnóstico por Vehículos Asociados -->
+        <div th:if="${vehiculos.isEmpty()}" style="padding: 30px; text-align: center; color: #7a7a90;">
+            El cliente no tiene vehículos registrados actualmente en el sistema.
+        </div>
+
+        <div th:each="v : ${vehiculos}" class="vehiculo-card">
+            <div class="vehiculo-header">
+                <div class="vehiculo-title" th:text="${v.nombreVehiculo + ' — ' + v.marca + (v.modelo != null ? ' ' + v.modelo : '')}">
+                    Vehículo
+                </div>
+                <div class="vehiculo-meta" th:text="'PLACA: ' + ${v.placa} + '  |  COLOR: ' + ${v.color != null ? v.color : '-'}">
+                    PLACA: ABC-123
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sensor</th>
+                        <th>Tipo</th>
+                        <th>Nivel de Desgaste / Lectura</th>
+                        <th>Estado</th>
+                        <th>Diagnóstico Técnico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${v.sensores == null or v.sensores.isEmpty()}">
+                        <td colspan="5" style="text-align:center;color:#6a6a7a;padding:15px;">
+                            Este vehículo no registra sensores configurados.
+                        </td>
+                    </tr>
+                    <tr th:each="s : ${v.sensores}">
+                        <td style="font-weight:600;" th:text="${s.nombreSensor}">Sensor</td>
+                        <td class="mono" th:text="${s.tipoSensor}">Tipo</td>
+                        <td class="mono" th:text="${s.nivel != null ? s.nivel + '%' : 'N/D'}">0%</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${(s.nivel != null && s.nivel >= 70) or 'falla'.equalsIgnoreCase(s.estado)} ? 'badge-falla' : (((s.nivel != null && s.nivel >= 40) or 'advertencia'.equalsIgnoreCase(s.estado)) ? 'badge-advertencia' : 'badge-optimo')"
+                                  th:text="${(s.nivel != null && s.nivel >= 70) or 'falla'.equalsIgnoreCase(s.estado)} ? 'FALLA' : (((s.nivel != null && s.nivel >= 40) or 'advertencia'.equalsIgnoreCase(s.estado)) ? 'ADVERTENCIA' : 'ÓPTIMO')">
+                            </span>
+                        </td>
+                        <td th:text="${s.tipoDano != null ? s.tipoDano : 'Operación normal'}">Diagnóstico</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Firmas de Auditoría -->
+        <div class="signatures">
+            <div class="sig-block">
+                <div class="sig-name" th:text="${adminNombre}">Administrador</div>
+                <div>Firma del Auditor Técnico</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-name" th:text="${cliente.nombreCliente + ' ' + cliente.apellidoCliente}">Cliente</div>
+                <div>Firma del Propietario / Cliente</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+

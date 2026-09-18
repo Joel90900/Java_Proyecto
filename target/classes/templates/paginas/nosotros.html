@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosotros — AutoSen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;}
+
+        /* NAV */
+        nav{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 3rem;border-bottom:1px solid var(--border);}
+        .brand{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.05em;text-decoration:none;color:var(--white);}
+        .brand b{color:var(--accent);}
+        .nav-links{display:flex;gap:1.75rem;align-items:center;}
+        .nav-link{color:var(--muted);text-decoration:none;font-size:.875rem;transition:color .2s;}
+        .nav-link:hover,.nav-link.active{color:var(--white);}
+        .btn-outline{background:none;border:1px solid var(--border);color:var(--white);padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:border-color .2s,color .2s;}
+        .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+        .btn-filled{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:opacity .2s;}
+        .btn-filled:hover{opacity:.85;}
+
+        /* HERO */
+        .hero{padding:5rem 2rem 4rem;text-align:center;}
+        .hero-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);padding:.4rem 1rem;border-radius:20px;display:inline-block;}
+        .hero h1{font-family:var(--font-display);font-size:4rem;letter-spacing:.03em;line-height:1;margin-bottom:1.5rem;}
+        .hero h1 span{color:var(--accent);}
+        .hero p{font-size:1.05rem;color:var(--muted);max-width:600px;line-height:1.7;margin:0 auto;}
+
+        /* MISSION */
+        .mission{padding:0 3rem 5rem;display:flex;justify-content:center;}
+        .mission-inner{max-width:900px;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2.5rem;text-align:center;}
+        .mission-inner h2{font-family:var(--font-display);font-size:1.8rem;letter-spacing:.05em;color:var(--teal);margin-bottom:1rem;}
+        .mission-inner p{color:var(--muted);line-height:1.8;font-size:.95rem;}
+
+        /* VALUES */
+        .values{padding:0 3rem 5rem;}
+        .values h2{font-family:var(--font-display);font-size:2.5rem;text-align:center;margin-bottom:3rem;letter-spacing:.03em;}
+        .values h2 span{color:var(--accent);}
+        .values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto;}
+        .value-card{background:var(--dark);border:1px solid var(--border);border-radius:4px;padding:1.75rem;}
+        .value-icon{font-size:1.8rem;margin-bottom:1rem;}
+        .value-card h3{font-family:var(--font-display);font-size:1.15rem;letter-spacing:.05em;margin-bottom:.6rem;}
+        .value-card p{font-size:.85rem;color:var(--muted);line-height:1.6;}
+
+        /* TEAM */
+        .team{padding:0 3rem 5rem;background:var(--dark);padding-top:5rem;padding-bottom:5rem;}
+        .team h2{font-family:var(--font-display);font-size:2.5rem;text-align:center;margin-bottom:3rem;letter-spacing:.03em;}
+        .team h2 span{color:var(--teal);}
+        .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;max-width:1000px;margin:0 auto;}
+        .team-card{text-align:center;}
+        .team-avatar{width:5rem;height:5rem;border-radius:50%;background:var(--card);border:1px solid var(--border);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;color:var(--accent);}
+        .team-card h3{font-family:var(--font-display);font-size:1.1rem;letter-spacing:.03em;margin-bottom:.25rem;}
+        .team-card p{font-size:.8rem;color:var(--muted);font-family:var(--font-mono);}
+
+        /* CTA */
+        .cta{padding:5rem 3rem;text-align:center;}
+        .cta h2{font-family:var(--font-display);font-size:2.75rem;letter-spacing:.03em;margin-bottom:1rem;}
+        .cta h2 span{color:var(--accent);}
+        .cta p{color:var(--muted);margin-bottom:2.5rem;font-size:1rem;}
+        .hero-btn-primary{background:var(--accent);color:#fff;padding:.85rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.1em;transition:opacity .2s;}
+        .hero-btn-primary:hover{opacity:.85;}
+
+        footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);}
+        footer b{color:var(--accent);}
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a th:href="@{/}" class="brand">Auto <b>Sen</b></a>
+        <div class="nav-links">
+            <a th:href="@{/}" class="nav-link">Inicio</a>
+            <a th:href="@{/nosotros}" class="nav-link active">Nosotros</a>
+            <a th:href="@{/login}" class="btn-outline">Iniciar Sesión</a>
+            <a th:href="@{/register}" class="btn-filled">Registrarse</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-tag">// Quiénes somos</div>
+        <h1>CONOCE <span>AUTOSEN</span></h1>
+        <p>Somos un equipo dedicado a hacer el mantenimiento vehicular más simple e inteligente, combinando monitoreo en tiempo real con alertas que previenen fallas antes de que ocurran.</p>
+    </section>
+
+    <!-- MISSION -->
+    <div class="mission">
+        <div class="mission-inner">
+            <h2>NUESTRA MISIÓN</h2>
+            <p>Brindar a cada conductor una herramienta accesible y confiable para vigilar la salud de su vehículo, reduciendo fallas inesperadas y prolongando la vida útil de cada componente a través de datos claros y alertas oportunas.</p>
+        </div>
+    </div>
+
+    <!-- VALUES -->
+    <section class="values">
+        <h2>NUESTROS <span>VALORES</span></h2>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">🎯</div>
+                <h3>PRECISIÓN</h3>
+                <p>Cada dato de sensor se procesa con rigurosidad para que la información que recibes sea confiable.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">⚡</div>
+                <h3>RAPIDEZ</h3>
+                <p>Las alertas llegan al instante, porque en mantenimiento vehicular cada minuto cuenta.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">🔒</div>
+                <h3>CONFIANZA</h3>
+                <p>Protegemos tus datos y los de tu vehículo con los más altos estándares de seguridad.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">🌱</div>
+                <h3>SIMPLICIDAD</h3>
+                <p>Diseñamos cada pantalla para que cualquier persona entienda el estado de su vehículo de un vistazo.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="team">
+        <h2>NUESTRO <span>EQUIPO</span></h2>
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-avatar">A</div>
+                <h3>Joel Moncaleano </h3>
+                <p>Desarrollo &amp; Producto</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">S</div>
+                <h3>Michael Bravo</h3>
+                <p>Monitoreo &amp; Sensores</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">D</div>
+                <h3>Jader Posso</h3>
+                <p>Experiencia de Usuario</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <h2>¿LISTO PARA <span>EMPEZAR</span>?</h2>
+        <p>Únete a AutoSen y comienza a monitorear tu vehículo hoy mismo.</p>
+        <a th:href="@{/register}" class="hero-btn-primary">CREAR CUENTA GRATIS</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <span>Auto <b>Sen</b> // Sistema de Monitoreo Vehicular</span>
+        <span>Spring Boot + Java</span>
+    </footer>
+
+<a th:href="@{/}" style="display:inline-block;margin-bottom:1.5rem;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);text-decoration:none;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='var(--muted)'">← Volver al inicio</a>
+
+</body>
+</html>
