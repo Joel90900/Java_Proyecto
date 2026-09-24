@@ -17,11 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Inyecta de forma automática el botón de tema claro/oscuro y sus
- * recursos (css/light-mode.css y js/theme-toggle.js) en todas las
- * respuestas HTML, sin tocar ninguna plantilla.
- */
+            
 @Component
 public class TemaFilter implements Filter {
 
