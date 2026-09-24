@@ -7,6 +7,10 @@ import com.example.sensores_vsc.repository.ClienteRepository;
 import com.example.sensores_vsc.repository.SensorRepository;
 import com.example.sensores_vsc.repository.UsuarioRepository;
 import com.example.sensores_vsc.repository.VehiculoRepository;
+import com.example.sensores_vsc.patrones.comportamiento.estrategia.ClasificadorEstadoSensor;
+import com.example.sensores_vsc.patrones.creacional.fabrica.EstadoSensorStrategyFactory;
+import com.example.sensores_vsc.patrones.creacional.fabrica.TipoEstado;
+import com.example.sensores_vsc.patrones.creacional.singleton.UmbralesReporte;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
@@ -23,17 +27,20 @@ import com.itextpdf.text.pdf.PdfWriter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/admin")
@@ -50,6 +57,9 @@ public class AdminController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // ---------------------------------------------------------
     // PALETA DE COLORES AUTOSEN
@@ -78,7 +88,7 @@ public class AdminController {
 
     @GetMapping("/nosotros")
     public String nosotrosPage() {
-        return "cliente/nosotros";
+        return "paginas/nosotros";
     }
 
     @GetMapping("/reportes")
@@ -108,13 +118,122 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+    // ---------------------------------------------------------
+    // EDITAR CLIENTE (CRUD - Update)
+    // ---------------------------------------------------------
+    @GetMapping("/cliente/{id}/editar")
+    public String showEditarCliente(@PathVariable Long id, Model model) {
+        Cliente cliente = clienteRepository.findById(id).orElseThrow();
+        model.addAttribute("cliente", cliente);
+        model.addAttribute("error", "");
+        return "admin/editar-cliente";
+    }
+
+    @PostMapping("/cliente/{id}/editar")
+    public String editarCliente(@PathVariable Long id,
+                                @RequestParam String nombre,
+                                @RequestParam String apellido,
+                                @RequestParam String correo,
+                                @RequestParam(required = false) String contrasena,
+                                Model model) {
+        Cliente cliente = clienteRepository.findById(id).orElseThrow();
+        model.addAttribute("cliente", cliente);
+
+        if (nombre.isBlank() || apellido.isBlank() || correo.isBlank()) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/editar-cliente";
+        }
+        if (!correo.contains("@") || !correo.contains(".")) {
+            model.addAttribute("error", "El correo no tiene un formato válido.");
+            return "admin/editar-cliente";
+        }
+        Optional<Cliente> existente = clienteRepository.findByCorreo(correo.trim());
+        if (existente.isPresent() && !existente.get().getIdCliente().equals(id)) {
+            model.addAttribute("error", "Ya existe un cliente con ese correo.");
+            return "admin/editar-cliente";
+        }
+        if (contrasena != null && !contrasena.isBlank() && contrasena.length() < 6) {
+            model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
+            return "admin/editar-cliente";
+        }
+
+        cliente.setNombreCliente(nombre.trim());
+        cliente.setApellidoCliente(apellido.trim());
+        cliente.setCorreo(correo.trim());
+        if (contrasena != null && !contrasena.isBlank()) {
+            cliente.setContrasena(passwordEncoder.encode(contrasena));
+        }
+        clienteRepository.save(cliente);
+        return "redirect:/admin";
+    }
+
+    // ---------------------------------------------------------
+    // EDITAR VEHÍCULO (CRUD - Update)
+    // ---------------------------------------------------------
+    @GetMapping("/vehiculo/{id}/editar")
+    public String showEditarVehiculo(@PathVariable Long id, Model model) {
+        Vehiculo v = vehiculoRepository.findById(id).orElseThrow();
+        model.addAttribute("vehiculo", v);
+        model.addAttribute("error", "");
+        return "admin/editar-vehiculo";
+    }
+
+    @PostMapping("/vehiculo/{id}/editar")
+    public String editarVehiculo(@PathVariable Long id,
+                                 @RequestParam String nombreVehiculo,
+                                 @RequestParam String marca,
+                                 @RequestParam(required = false) String modelo,
+                                 @RequestParam String color,
+                                 @RequestParam String placa,
+                                 @RequestParam String tipoPlaca,
+                                 Model model) {
+        Vehiculo v = vehiculoRepository.findById(id).orElseThrow();
+        model.addAttribute("vehiculo", v);
+
+        String placaNormalizada = placa.toUpperCase().trim();
+        if (nombreVehiculo.isBlank() || marca.isBlank() || color.isBlank() || placaNormalizada.isBlank()) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/editar-vehiculo";
+        }
+        if (!placaNormalizada.matches("^[A-Z]{3}[-]?[0-9]{3}$")) {
+            model.addAttribute("error", "Formato de placa inválido. Ejemplo: ABC123 o ABC-123.");
+            return "admin/editar-vehiculo";
+        }
+        Optional<Vehiculo> existente = vehiculoRepository.findByPlaca(placaNormalizada);
+        if (existente.isPresent() && !existente.get().getIdVehiculo().equals(id)) {
+            model.addAttribute("error", "Ya existe un vehículo con esa placa.");
+            return "admin/editar-vehiculo";
+        }
+
+        v.setNombreVehiculo(nombreVehiculo.trim());
+        v.setMarca(marca.trim());
+        v.setModelo(modelo == null || modelo.isBlank() ? v.getModelo() : modelo.trim());
+        v.setColor(color.trim());
+        v.setPlaca(placaNormalizada);
+        v.setTipoPlaca(tipoPlaca);
+        vehiculoRepository.save(v);
+        return "redirect:/admin";
+    }
+
     @GetMapping("/reportes/pdf")
-    public void exportarPdfCompleto(HttpServletResponse response) throws Exception {
+    public void exportarPdfCompleto(
+            @RequestParam(required = false) String estadoCliente,
+            @RequestParam(required = false) String estadoSensor,
+            @RequestParam(required = false) String tipoSensor,
+            @RequestParam(required = false) Integer nivelMin,
+            @RequestParam(required = false) Integer nivelMax,
+            HttpServletResponse response) throws Exception {
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=reporte-autosen.pdf");
 
-        List<Cliente> clientes = clienteRepository.findAll();
-        List<Sensor> sensores = sensorRepository.findAll();
+        List<Cliente> clientes = clienteRepository.findAll().stream()
+                .filter(c -> estadoCliente == null || estadoCliente.isBlank()
+                        || estadoCliente.equalsIgnoreCase(c.getEstado()))
+                .toList();
+
+        List<Sensor> sensores = sensorRepository.findAll().stream()
+                .filter(s -> pasaFiltrosPdf(s, estadoSensor, tipoSensor, nivelMin, nivelMax))
+                .toList();
 
         Document doc = new Document(PageSize.A4.rotate(), 30, 30, 30, 30);
         PdfWriter.getInstance(doc, response.getOutputStream());
@@ -124,6 +243,24 @@ public class AdminController {
         agregarTablaClientes(doc, clientes);
         agregarTablaSensores(doc, sensores);
         doc.close();
+    }
+
+    private boolean pasaFiltrosPdf(Sensor s, String estadoSensor, String tipoSensor,
+                                   Integer nivelMin, Integer nivelMax) {
+        if (nivelMin != null && nivelMax != null && nivelMin > nivelMax) {
+            int aux = nivelMin;
+            nivelMin = nivelMax;
+            nivelMax = aux;
+        }
+        ClasificadorEstadoSensor clasificador = new ClasificadorEstadoSensor(
+                EstadoSensorStrategyFactory.crear(TipoEstado.FILTRO));
+        if (estadoSensor != null && !estadoSensor.isBlank()
+                && !estadoSensor.equalsIgnoreCase(clasificador.clasificar(s.getNivel()))) return false;
+        if (tipoSensor != null && !tipoSensor.isBlank()
+                && !tipoSensor.equals(s.getTipoSensor())) return false;
+        if (nivelMin != null && (s.getNivel() == null || s.getNivel() < nivelMin)) return false;
+        if (nivelMax != null && (s.getNivel() == null || s.getNivel() > nivelMax)) return false;
+        return true;
     }
 
     @GetMapping("/reportes/cliente/{id}/pdf")
@@ -153,10 +290,13 @@ public class AdminController {
                     tabla.setSpacingAfter(10f);
                     agregarCabecera(tabla, new String[]{"Sensor", "Tipo", "Nivel", "Estado", "Tipo Da\u00f1o"});
                     boolean par = false;
+                    ClasificadorEstadoSensor clasificador = new ClasificadorEstadoSensor(
+                            EstadoSensorStrategyFactory.crear(TipoEstado.REPORTE));
                     for (Sensor s : v.getSensores()) {
-                        String estado = s.getNivel() < 40 ? "OK" : s.getNivel() < 70 ? "ADVERTENCIA" : "FALLA";
+                        int nivel = s.getNivel() == null ? 0 : s.getNivel();
+                        String estado = clasificador.clasificar(nivel);
                         agregarFila(tabla, par, s.getNombreSensor(), s.getTipoSensor(),
-                            s.getNivel() + "%", estado, s.getTipoDano() != null ? s.getTipoDano() : "-");
+                            nivel + "%", estado, s.getTipoDano() != null ? s.getTipoDano() : "-");
                         par = !par;
                     }
                     doc.add(tabla);
@@ -349,8 +489,11 @@ public class AdminController {
         agregarCabecera(tabla, new String[]{"Sensor", "Tipo", "Veh\u00edculo", "Cliente", "Nivel", "Estado"});
         boolean par = false;
         Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9, NEGRO);
+        ClasificadorEstadoSensor clasificador = new ClasificadorEstadoSensor(
+                EstadoSensorStrategyFactory.crear(TipoEstado.REPORTE));
         for (Sensor s : sensores) {
-            String estado = s.getNivel() < 40 ? "OK" : s.getNivel() < 70 ? "ADVERTENCIA" : "FALLA";
+            int nivel = s.getNivel() == null ? 0 : s.getNivel();
+            String estado = clasificador.clasificar(nivel);
             String vehiculo = s.getVehiculo() != null ? s.getVehiculo().getNombreVehiculo() : "-";
             String cliente = s.getVehiculo() != null && s.getVehiculo().getCliente() != null
                 ? s.getVehiculo().getCliente().getNombreCliente() : "-";
@@ -366,7 +509,7 @@ public class AdminController {
             tabla.addCell(celda(s.getTipoSensor(), fontNormal, fondo));
             tabla.addCell(celda(vehiculo, fontNormal, fondo));
             tabla.addCell(celda(cliente, fontNormal, fondo));
-            tabla.addCell(celda(s.getNivel() + "%", fontNormal, fondo));
+            tabla.addCell(celda(nivel + "%", fontNormal, fondo));
             tabla.addCell(celda(estado, fontEstado, fondo));
             par = !par;
         }
@@ -384,19 +527,38 @@ public class AdminController {
     private void cargarDatosReportes(Model model) {
         List<Cliente> clientes = clienteRepository.findAll();
         List<Sensor> sensores = sensorRepository.findAll();
-        long totalFallas = sensores.stream().filter(s -> s.getNivel() >= 70).count();
-        long totalAdvertencias = sensores.stream().filter(s -> s.getNivel() >= 40 && s.getNivel() < 70).count();
+        long totalFallas = sensores.stream()
+                .filter(s -> s.getNivel() != null && UmbralesReporte.INSTANCIA.esFalla(s.getNivel())).count();
+        long totalAdvertencias = sensores.stream()
+                .filter(s -> s.getNivel() != null && UmbralesReporte.INSTANCIA.esAdvertencia(s.getNivel())).count();
         model.addAttribute("clientes", clientes);
         model.addAttribute("todosSensores", sensores);
         model.addAttribute("clientesBloqueados", clientes.stream()
             .filter(c -> "bloqueado".equals(c.getEstado())).toList());
         model.addAttribute("vehiculosConFallas", vehiculoRepository.findAll().stream()
             .filter(v -> v.getSensores() != null &&
-                v.getSensores().stream().anyMatch(s -> s.getNivel() >= 70)).toList());
+                v.getSensores().stream().anyMatch(s ->
+                    s.getNivel() != null && UmbralesReporte.INSTANCIA.esFalla(s.getNivel()))).toList());
         model.addAttribute("totalClientes", clientes.size());
         model.addAttribute("totalVehiculos", vehiculoRepository.count());
         model.addAttribute("totalSensores", sensores.size());
         model.addAttribute("totalFallas", totalFallas);
         model.addAttribute("totalAdvertencias", totalAdvertencias);
+
+        // Valores por defecto de los filtros (para el formulario en reportes.html)
+        model.addAttribute("q", "");
+        model.addAttribute("estadoCliente", "");
+        model.addAttribute("estadoSensor", "");
+        model.addAttribute("tipoSensor", "");
+        model.addAttribute("marca", "");
+        model.addAttribute("tipoPlaca", "");
+        model.addAttribute("nivelMin", null);
+        model.addAttribute("nivelMax", null);
+        model.addAttribute("ordenarPor", "");
+        model.addAttribute("tiposSensor", sensores.stream().map(Sensor::getTipoSensor)
+            .filter(t -> t != null && !t.isBlank()).distinct().sorted().toList());
+        model.addAttribute("marcas", vehiculoRepository.findAll().stream().map(Vehiculo::getMarca)
+            .filter(m -> m != null && !m.isBlank()).distinct().sorted().toList());
+        model.addAttribute("tiposPlaca", List.of("particular", "publico"));
     }
 }

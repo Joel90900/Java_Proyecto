@@ -2,56 +2,50 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Editar Vehículo — AutoSen</title>
+    <title>Editar Cliente — AutoSen</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#9e111c;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#2ec4b6;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
         body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
         .card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:2rem;max-width:480px;width:100%;}
         .page-title{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.03em;margin-bottom:1.5rem;}
         .page-title span{color:var(--accent);}
         .form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem;}
         label{font-family:var(--font-mono);font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
-        input,select{background:var(--dark);border:1px solid var(--border);color:var(--white);padding:.6rem .75rem;border-radius:4px;font-family:var(--font-body);font-size:.9rem;}
-        input:focus,select:focus{outline:none;border-color:var(--accent);}
+        input{background:var(--dark);border:1px solid var(--border);color:var(--white);padding:.6rem .75rem;border-radius:4px;font-family:var(--font-body);font-size:.9rem;}
+        input:focus{outline:none;border-color:var(--accent);}
         .btn-row{display:flex;gap:.75rem;margin-top:1.5rem;}
         .btn-primary{background:var(--accent);color:var(--white);border:none;padding:.7rem 1.2rem;border-radius:4px;font-family:var(--font-mono);font-size:.75rem;letter-spacing:.05em;cursor:pointer;flex:1;}
         .btn-secondary{background:none;border:1px solid var(--border);color:var(--muted);padding:.7rem 1.2rem;border-radius:4px;font-family:var(--font-mono);font-size:.75rem;letter-spacing:.05em;text-decoration:none;text-align:center;flex:1;}
-        .error{background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);padding:.75rem 1rem;border-radius:2px;font-size:.85rem;color:var(--accent);margin-bottom:1.5rem;font-family:var(--font-mono);}
+        .error{background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);padding:.75rem 1rem;border-radius:2px;font-size:.85rem;color:#e63946;margin-bottom:1.5rem;font-family:var(--font-mono);}
+        .hint{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-top:.2rem;}
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1 class="page-title">EDITAR <span>VEHÍCULO</span></h1>
+    <h1 class="page-title">EDITAR <span>CLIENTE</span></h1>
 
     <div th:if="${error}" class="error" th:text="${error}"></div>
 
-    <form method="post" th:action="@{/admin/vehiculo/{id}/editar(id=${vehiculo.idVehiculo})}">
+    <form method="post" th:action="@{/admin/cliente/{id}/editar(id=${cliente.idCliente})}">
         <div class="form-group">
-            <label>Nombre del vehículo</label>
-            <input type="text" name="nombreVehiculo" th:value="${vehiculo.nombreVehiculo}" required>
+            <label>Nombre</label>
+            <input type="text" name="nombre" th:value="${cliente.nombreCliente}" required>
         </div>
         <div class="form-group">
-            <label>Marca</label>
-            <input type="text" name="marca" th:value="${vehiculo.marca}" required>
+            <label>Apellido</label>
+            <input type="text" name="apellido" th:value="${cliente.apellidoCliente}" required>
         </div>
         <div class="form-group">
-            <label>Modelo</label>
-            <input type="text" name="modelo" th:value="${vehiculo.modelo}" placeholder="Ej.: 2020-01-01">
+            <label>Correo electrónico</label>
+            <input type="email" name="correo" th:value="${cliente.correo}" required>
         </div>
         <div class="form-group">
-            <label>Color</label>
-            <input type="text" name="color" th:value="${vehiculo.color}" required>
-        </div>
-        <div class="form-group">
-            <label>Placa</label>
-            <input type="text" name="placa" th:value="${vehiculo.placa}" required>
-        </div>
-        <div class="form-group">
-            <label>Tipo de placa</label>
-            <input type="text" name="tipoPlaca" th:value="${vehiculo.tipoPlaca}" required>
+            <label>Nueva contraseña (opcional)</label>
+            <input type="password" name="contrasena" placeholder="Dejar en blanco para no cambiarla">
+            <div class="hint">Mínimo 6 caracteres. Si la dejas en blanco se conserva la actual.</div>
         </div>
 
         <div class="btn-row">

@@ -84,6 +84,7 @@
             <div class="actions">
                 <span th:class="${cliente.estado == 'activo'} ? 'badge-activo' : 'badge-bloqueado'"
                       th:text="${cliente.estado == 'activo'} ? '✓ ACTIVO' : '🔒 BLOQUEADO'"></span>
+                <a th:href="@{/admin/cliente/{id}/editar(id=${cliente.idCliente})}" class="btn-edit">EDITAR</a>
                 <form method="post" th:action="@{/admin/cliente/{id}/estado(id=${cliente.idCliente})}">
                     <button type="submit" class="btn-edit"
                             th:text="${cliente.estado == 'activo'} ? 'BLOQUEAR' : 'ACTIVAR'"></button>
@@ -98,6 +99,7 @@
                     <div class="vehiculo-meta" th:text="'Placa: ' + ${v.placa} + ' · Color: ' + ${v.color}"></div>
                 </div>
                 <div class="actions">
+                    <a th:href="@{/admin/vehiculo/{id}/editar(id=${v.idVehiculo})}" class="btn-edit">EDITAR</a>
                     <form method="post" th:action="@{/admin/vehiculo/{id}/eliminar(id=${v.idVehiculo})}">
                         <button type="submit" class="btn-del"
                                 onclick="return confirm('¿Eliminar este vehículo?')">ELIMINAR</button>

@@ -7,9 +7,6 @@
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#9e111c;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
-        :root[data-theme="light"]{--black:#f4f4f7;--dark:#ffffff;--card:#ffffff;--border:#dcdce4;--white:#15151d;--muted:#5c5c72;}
-        .theme-toggle{position:fixed;top:1rem;right:1rem;z-index:999;background:var(--card);border:1px solid var(--border);color:var(--white);width:2.5rem;height:2.5rem;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:transform .2s;}
-        .theme-toggle:hover{transform:scale(1.08);}
         body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
         .card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:2rem;max-width:480px;width:100%;}
         .page-title{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.03em;margin-bottom:1.5rem;}
@@ -25,7 +22,6 @@
     </style>
 </head>
 <body>
-<button id="theme-toggle" type="button" class="theme-toggle" aria-label="Cambiar tema claro/oscuro">🌙</button>
 
 <div class="card">
     <h1 class="page-title">EDITAR <span>VEHÍCULO</span></h1>
@@ -40,6 +36,10 @@
         <div class="form-group">
             <label>Marca</label>
             <input type="text" name="marca" th:value="${vehiculo.marca}" required>
+        </div>
+        <div class="form-group">
+            <label>Modelo</label>
+            <input type="text" name="modelo" th:value="${vehiculo.modelo}" placeholder="Ej.: 2020-01-01">
         </div>
         <div class="form-group">
             <label>Color</label>
@@ -61,27 +61,5 @@
     </form>
 </div>
 
-<script>
-(function(){
-    var root = document.documentElement;
-    var saved = localStorage.getItem('autosen-theme');
-    if (saved === 'light') root.setAttribute('data-theme', 'light');
-    var btn = document.getElementById('theme-toggle');
-    function updateIcon(){ btn.textContent = root.getAttribute('data-theme') === 'light' ? '☀️' : '🌙'; }
-    if (btn) {
-        updateIcon();
-        btn.addEventListener('click', function(){
-            if (root.getAttribute('data-theme') === 'light') {
-                root.removeAttribute('data-theme');
-                localStorage.setItem('autosen-theme', 'dark');
-            } else {
-                root.setAttribute('data-theme', 'light');
-                localStorage.setItem('autosen-theme', 'light');
-            }
-            updateIcon();
-        });
-    }
-})();
-</script>
 </body>
 </html>

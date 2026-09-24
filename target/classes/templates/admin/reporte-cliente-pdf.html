@@ -213,7 +213,7 @@
             <div class="info-item">
                 <div class="info-lbl">Estado de Cuenta</div>
                 <div class="info-val">
-                    <span th:text="${cliente.estado.toUpperCase()}" 
+                    <span th:text="${#strings.toUpperCase(cliente.estado)}" 
                           th:style="${'activo'.equalsIgnoreCase(cliente.estado) ? 'color:#1c7c4c;' : 'color:#c52727;'}">
                           ACTIVO
                     </span>

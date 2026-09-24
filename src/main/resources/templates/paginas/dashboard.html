@@ -30,6 +30,16 @@
         .btn-bluetooth{display:flex;align-items:center;gap:.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);color:var(--teal);padding:.6rem 1.2rem;border-radius:4px;font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;cursor:pointer;transition:background .2s;margin-bottom:2rem;}
         .btn-bluetooth:hover{background:rgba(46,196,182,.2);}
         .bt-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite;}
+        .bt-status{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin:.75rem 0 1.5rem;}
+        .telemetry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-bottom:2rem;}
+        .telemetry-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.1rem;}
+        .tel-nombre{font-family:var(--font-mono);font-size:.68rem;color:var(--muted);letter-spacing:.04em;}
+        .tel-valor{font-family:var(--font-display);font-size:1.9rem;line-height:1;margin-top:.4rem;}
+        .tel-unidad{font-size:.8rem;color:var(--muted);font-family:var(--font-mono);}
+        .tel-bar{height:8px;background:#1a1a1e;border-radius:4px;margin-top:.6rem;overflow:hidden;}
+        .tel-fill{height:100%;border-radius:4px;}
+        .tel-pie{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-top:.4rem;}
+        .tel-badge{display:inline-block;padding:.1rem .5rem;border-radius:3px;font-size:.62rem;font-weight:700;color:#0a0a0c;margin-left:.35rem;}
         @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.5rem;}
         .stat-card{background:var(--card);border:1px solid var(--border);padding:1.5rem;border-radius:4px;}
@@ -73,10 +83,12 @@
 </aside>
 
 <main>
-    <button class="btn-bluetooth">
-        <div class="bt-dot"></div>
-        🔵 CONECTAR BLUETOOTH
+    <button id="btn-bluetooth" class="btn-bluetooth" onclick="toggleBluetooth()">
+        <div class="bt-dot" id="bt-dot"></div>
+        <span id="bt-label">🔵 CONECTAR BLUETOOTH</span>
     </button>
+    <div id="bt-status" class="bt-status"></div>
+    <div id="telemetry" class="telemetry-grid"></div>
 
     <h1 class="page-title">HOLA, <span th:text="${cliente.nombreCliente}"></span></h1>
     <p class="page-date" th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd MMMM yyyy')}"></p>
@@ -156,6 +168,101 @@
         </div>
     </div>
 </main>
+
+<script>
+const COLOR = { OK:'#2ec4b6', ADVERTENCIA:'#f4a261', FALLA:'#e63946' };
+let conectado = false;
+let timer = null;
+let idVehiculo = null;
+const btn = document.getElementById('btn-bluetooth');
+const label = document.getElementById('bt-label');
+const statusBox = document.getElementById('bt-status');
+const caja = document.getElementById('telemetry');
+
+function dedup(lista) {
+    const map = new Map();
+    lista.forEach(l => { if (!map.has(l.nombreSensor)) map.set(l.nombreSensor, l); });
+    return Array.from(map.values());
+}
+
+function renderLecturas(lista) {
+    if (!lista.length) {
+        caja.innerHTML = '<div class="bt-status">⏳ Esperando datos del escáner…</div>';
+        return;
+    }
+    caja.innerHTML = lista.map(l => {
+        const n = l.nivel || 0;
+        const e = (l.estado || 'OK').toUpperCase();
+        return '<div class="telemetry-card">'
+            + '<div class="tel-nombre">📡 ' + l.nombreSensor + '</div>'
+            + '<div class="tel-valor">' + l.valor + ' <span class="tel-unidad">' + (l.unidad || '') + '</span></div>'
+            + '<div class="tel-bar"><div class="tel-fill" style="width:' + Math.min(100, n) + '%;background:' + COLOR[e] + '"></div></div>'
+            + '<div class="tel-pie">Nivel ' + n + '% <span class="tel-badge" style="background:' + COLOR[e] + '">' + e + '</span></div>'
+            + '</div>';
+    }).join('');
+}
+
+function actualizarKPIs(lista) {
+    const ok = lista.filter(l => (l.nivel || 0) < 40).length;
+    const adv = lista.filter(l => (l.nivel || 0) >= 40 && (l.nivel || 0) < 70).length;
+    const fal = lista.filter(l => (l.nivel || 0) >= 70).length;
+    const cards = Array.from(document.querySelectorAll('.stat-card'));
+    if (cards.length === 4) {
+        cards[1].querySelector('.stat-value').textContent = ok;
+        cards[2].querySelector('.stat-value').textContent = adv;
+        cards[3].querySelector('.stat-value').textContent = fal;
+    }
+}
+
+async function toggleBluetooth() {
+    if (conectado) {
+        conectado = false;
+        clearInterval(timer);
+        timer = null;
+        btn.style.background = 'rgba(46,196,182,.1)';
+        label.textContent = '🔵 CONECTAR BLUETOOTH';
+        statusBox.innerHTML = '<span style="color:var(--muted)">🔌 Escáner desconectado.</span>';
+        return;
+    }
+
+    btn.disabled = true;
+    label.textContent = '🔍 Buscando escáner ELM327…';
+    await new Promise(r => setTimeout(r, 1600));
+    label.textContent = '🔗 Conectando por Bluetooth…';
+    await new Promise(r => setTimeout(r, 1400));
+
+    try {
+        const r = await fetch('/api/obd2/conectar', { method: 'POST' });
+        const data = await r.json();
+        if (!data.ok) {
+            label.textContent = '🔵 CONECTAR BLUETOOTH';
+            statusBox.innerHTML = '<span style="color:var(--accent)">⚠️ ' + data.mensaje + '</span>';
+            return;
+        }
+        conectado = true;
+        idVehiculo = data.idVehiculo;
+        btn.style.background = 'rgba(46,196,182,.25)';
+        label.textContent = '✅ CONECTADO · ' + data.elmMac;
+        statusBox.innerHTML = '<span style="color:var(--teal)">📡 ' + data.mensaje + '</span>';
+        renderLecturas(data.lecturas || []);
+        actualizarKPIs(data.lecturas || []);
+        timer = setInterval(async () => {
+            try {
+                const rr = await fetch('/api/obd2/ultima/' + idVehiculo);
+                const dd = await rr.json();
+                const ultimas = dedup(dd.lecturas || []);
+                renderLecturas(ultimas);
+                actualizarKPIs(ultimas);
+            } catch (e) { /* silencioso: reintenta en el siguiente ciclo */ }
+        }, 3000);
+    } catch (e) {
+        label.textContent = '🔵 CONECTAR BLUETOOTH';
+        statusBox.innerHTML = '<span style="color:var(--accent)">⚠️ No se pudo conectar el escáner. Revisa tu sesión.</span>';
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
 
 </body>
 </html>

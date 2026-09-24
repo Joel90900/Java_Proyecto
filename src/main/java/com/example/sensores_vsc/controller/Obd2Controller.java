@@ -1,12 +1,19 @@
 package com.example.sensores_vsc.controller;
 
 import com.example.sensores_vsc.model.Alerta;
+import com.example.sensores_vsc.model.Cliente;
 import com.example.sensores_vsc.model.Lectura;
+import com.example.sensores_vsc.model.Sensor;
 import com.example.sensores_vsc.model.Vehiculo;
 import com.example.sensores_vsc.repository.AlertaRepository;
+import com.example.sensores_vsc.repository.ClienteRepository;
 import com.example.sensores_vsc.repository.LecturaRepository;
+import com.example.sensores_vsc.repository.SensorRepository;
 import com.example.sensores_vsc.repository.VehiculoRepository;
+import com.example.sensores_vsc.patrones.comportamiento.observador.AlertaCriticaEvento;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -26,7 +33,15 @@ public class Obd2Controller {
     @Autowired
     private VehiculoRepository vehiculoRepository;
 
-   
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    @Autowired
+    private SensorRepository sensorRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
     
     @PostMapping("/lecturas")
     public Map<String, Object> guardarLectura(
@@ -72,6 +87,7 @@ public class Obd2Controller {
             a.setLeida(0);
             a.setFechaAlerta(LocalDateTime.now());
             alertaRepository.save(a);
+            eventPublisher.publishEvent(new AlertaCriticaEvento(this, a));
         }
 
         resp.put("ok", true);
@@ -164,8 +180,161 @@ public class Obd2Controller {
         resp.put("lecturas", json);
         return resp;
     }
+    
+    @GetMapping("/vehiculo/{id}/elm")
+public Map<String, Object> obtenerElm(@PathVariable Long id) {
 
+    Map<String, Object> resp = new LinkedHashMap<>();
+
+    Vehiculo v = vehiculoRepository.findById(id).orElse(null);
+
+    if (v == null) {
+        resp.put("ok", false);
+        resp.put("mensaje", "Vehículo no encontrado.");
+        return resp;
+    }
+
+    resp.put("ok", true);
+    resp.put("idVehiculo", id);
+    resp.put("elmMac", v.getElmMac());
+
+    if (v.getElmMac() == null || v.getElmMac().isBlank()) {
+        resp.put("conectado", false);
+        resp.put("mensaje", "No hay un ELM327 asociado a este vehículo.");
+    } else {
+        resp.put("conectado", false);
+        resp.put("mensaje", "ELM327 registrado. La conexión Bluetooth debe realizarse desde Android.");
+    }
+
+    return resp;
+}
   
+    // ---------------------------------------------------------
+    // CONEXIÓN BLUETOOTH — botón "CONECTAR BLUETOOTH" del dashboard
+    // Simula el descubrimiento del escáner ELM327, guarda lecturas
+    // reales en "lecturas" y devuelve la telemetría inicial.
+    // ---------------------------------------------------------
+    @PostMapping("/conectar")
+    public Map<String, Object> conectar(Authentication auth) {
+        Map<String, Object> resp = new LinkedHashMap<>();
+        String correo = auth.getName();
+
+        Cliente cliente = clienteRepository.findByCorreo(correo).orElse(null);
+        if (cliente == null) {
+            resp.put("ok", false);
+            resp.put("mensaje", "Cliente no encontrado. Inicia sesión de nuevo.");
+            return resp;
+        }
+
+        List<Vehiculo> vehiculos = vehiculoRepository.findByClienteIdCliente(cliente.getIdCliente());
+        if (vehiculos.isEmpty()) {
+            resp.put("ok", false);
+            resp.put("conectado", false);
+            resp.put("mensaje", "Primero registra un vehículo para poder conectar el escáner ELM327.");
+            return resp;
+        }
+
+        Vehiculo v = vehiculos.get(0);
+        String elmMac = (v.getElmMac() == null || v.getElmMac().isBlank())
+                ? "ELM327-SIM-" + nz(v.getPlaca()) : v.getElmMac();
+
+        resp.put("ok", true);
+        resp.put("conectado", true);
+        resp.put("idVehiculo", v.getIdVehiculo());
+        resp.put("vehiculo", nz(v.getNombreVehiculo()) + " " + nz(v.getPlaca()));
+        resp.put("elmMac", elmMac);
+        resp.put("mensaje", "Escáner ELM327 conectado por Bluetooth. Recibiendo datos del vehículo en tiempo real.");
+
+        List<Sensor> sensores = sensorRepository.findByVehiculoIdVehiculo(v.getIdVehiculo());
+        List<Map<String, Object>> lecturas = new ArrayList<>();
+        for (Sensor s : sensores) {
+            String tipo = s.getTipoSensor();
+            double valor = valorSimulado(tipo);
+            String unidad = unidadDe(tipo);
+
+            Lectura l = new Lectura();
+            l.setIdVehiculo(v.getIdVehiculo());
+            l.setNombreSensor(s.getNombreSensor());
+            l.setTipoSensor(tipo);
+            l.setValor(valor);
+            l.setUnidad(unidad);
+            int nivel = calcularNivel(tipo, valor);
+            l.setNivel(nivel);
+            l.setEstado(nivel < 40 ? "OK" : nivel < 70 ? "ADVERTENCIA" : "FALLA");
+            l.setFechaLectura(LocalDateTime.now());
+            lecturaRepository.save(l);
+
+            if (nivel >= 40) {
+                Alerta a = new Alerta();
+                a.setIdVehiculo(v.getIdVehiculo());
+                a.setNombreSensor(s.getNombreSensor());
+                a.setTipoSensor(tipo);
+                a.setValor(valor);
+                a.setNivel(nivel);
+                a.setTipo(nivel >= 70 ? "falla" : "advertencia");
+                a.setMensaje(nivel >= 70
+                        ? "Falla crítica en " + s.getNombreSensor() + ": nivel " + nivel + "% (" + valor + " " + unidad + ")."
+                        : "Advertencia en " + s.getNombreSensor() + ": nivel " + nivel + "% (" + valor + " " + unidad + ").");
+                a.setLeida(0);
+                a.setFechaAlerta(LocalDateTime.now());
+                alertaRepository.save(a);
+                eventPublisher.publishEvent(new AlertaCriticaEvento(this, a));
+            }
+
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("nombreSensor", s.getNombreSensor());
+            m.put("tipoSensor", tipo);
+            m.put("valor", valor);
+            m.put("unidad", unidad);
+            m.put("nivel", nivel);
+            m.put("estado", l.getEstado());
+            lecturas.add(m);
+        }
+
+        resp.put("lecturas", lecturas);
+        return resp;
+    }
+
+    private double valorSimulado(String tipo) {
+        return switch (tipo == null ? "" : tipo) {
+            case "MAF" ->       redondear(2 + Math.random() * 10);
+            case "O2" ->        redondearDos(0.1 + Math.random() * 1.1);
+            case "ECT" ->       redondear(75 + Math.random() * 55);
+            case "MAP" ->       redondearDos(0.5 + Math.random() * 0.7);
+            case "RPM" ->       Math.round(650 + Math.random() * 3800);
+            case "VELOCIDAD" -> Math.round(Math.random() * 120);
+            case "TEMP" ->      redondear(75 + Math.random() * 55);
+            case "OIL" ->       redondearDos(1 + Math.random() * 5);
+            case "FUEL" ->      Math.round(15 + Math.random() * 80);
+            default ->          redondear(Math.random() * 100);
+        };
+    }
+
+    private String unidadDe(String tipo) {
+        return switch (tipo == null ? "" : tipo) {
+            case "RPM" -> "rpm";
+            case "VELOCIDAD" -> "km/h";
+            case "TEMP", "ECT" -> "°C";
+            case "MAF" -> "g/s";
+            case "O2" -> "V";
+            case "OIL" -> "bar";
+            case "FUEL" -> "%";
+            default -> "";
+        };
+    }
+
+    private double redondear(double d) {
+        return Math.round(d * 10.0) / 10.0;
+    }
+
+    private double redondearDos(double d) {
+        return Math.round(d * 100.0) / 100.0;
+    }
+
+    private String nz(String s) {
+        return s == null ? "" : s;
+    }
+
     private int calcularNivel(String tipoSensor, double valor) {
         double minNormal = 0, maxNormal = 100, maxRango = 100;
         switch (tipoSensor) {

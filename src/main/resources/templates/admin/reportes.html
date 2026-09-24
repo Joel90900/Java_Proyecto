@@ -101,6 +101,34 @@
 
         .badge.activo { background-color: rgba(77,216,138,0.15); color: #4dd88a; }
         .badge.bloqueado { background-color: rgba(230,90,90,0.15); color: #e65a5a; }
+        .badge.optimo { background-color: rgba(77,216,138,0.15); color: #4dd88a; }
+        .badge.advertencia { background-color: rgba(230,184,77,0.15); color: #e6b84d; }
+        .badge.falla { background-color: rgba(230,90,90,0.2); color: #e65a5a; }
+
+        .filtros-box {
+            background-color: #1a1a1e;
+            border: 1px solid #2a2a2e;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 30px;
+        }
+        .filtros-box label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #9a9a9a; }
+        .filtros-box input, .filtros-box select {
+            background-color: #131316;
+            border: 1px solid #2a2a2e;
+            color: #e6e6e6;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .filtro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .filtro-acciones { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .vacio { color: #6a6a6a; font-style: italic; padding: 20px 0; }
     </style>
@@ -111,10 +139,75 @@
         <h1>Reportes</h1>
         <div class="btn-group">
             <a class="btn btn-primary" th:href="@{/admin/reportes/pdf}">Descargar PDF completo</a>
+            <a class="btn btn-secondary" th:href="@{/admin/reportes/excel}">Descargar Excel</a>
             <a class="btn btn-secondary" th:href="@{/admin/reportes/csv/sensores}">CSV sensores</a>
             <a class="btn btn-secondary" th:href="@{/admin/reportes/csv/fallas}">CSV fallas</a>
         </div>
     </header>
+
+    <!-- Filtros multicriterio -->
+    <form method="get" th:action="@{/admin/reportes-filtrado}" class="filtros-box">
+        <div class="filtro-grid">
+            <label>Buscar
+                <input type="text" name="q" th:value="${q}" placeholder="Nombre, correo, placa...">
+            </label>
+            <label>Estado cliente
+                <select name="estadoCliente">
+                    <option value="">Todos</option>
+                    <option value="activo" th:selected="${'activo'.equals(estadoCliente)}">Activo</option>
+                    <option value="bloqueado" th:selected="${'bloqueado'.equals(estadoCliente)}">Bloqueado</option>
+                </select>
+            </label>
+            <label>Estado sensor
+                <select name="estadoSensor">
+                    <option value="">Todos</option>
+                    <option value="optimo" th:selected="${'optimo'.equals(estadoSensor)}">Óptimo</option>
+                    <option value="advertencia" th:selected="${'advertencia'.equals(estadoSensor)}">Advertencia</option>
+                    <option value="falla" th:selected="${'falla'.equals(estadoSensor)}">Falla</option>
+                </select>
+            </label>
+            <label>Tipo sensor
+                <select name="tipoSensor">
+                    <option value="">Todos</option>
+                    <option th:each="t : ${tiposSensor}" th:value="${t}" th:text="${t}"
+                            th:selected="${t == tipoSensor}"></option>
+                </select>
+            </label>
+            <label>Marca
+                <select name="marca">
+                    <option value="">Todas</option>
+                    <option th:each="m : ${marcas}" th:value="${m}" th:text="${m}"
+                            th:selected="${m == marca}"></option>
+                </select>
+            </label>
+            <label>Tipo placa
+                <select name="tipoPlaca">
+                    <option value="">Todos</option>
+                    <option th:each="tp : ${tiposPlaca}" th:value="${tp}" th:text="${tp}"
+                            th:selected="${tp == tipoPlaca}"></option>
+                </select>
+            </label>
+            <label>Nivel mínimo
+                <input type="number" name="nivelMin" min="0" max="100" th:value="${nivelMin}">
+            </label>
+            <label>Nivel máximo
+                <input type="number" name="nivelMax" min="0" max="100" th:value="${nivelMax}">
+            </label>
+            <label>Ordenar por
+                <select name="ordenarPor">
+                    <option value="nombre" th:selected="${'nombre'.equals(ordenarPor) or ordenarPor == null}">Por cliente</option>
+                    <option value="nivel" th:selected="${'nivel'.equals(ordenarPor)}">Por nivel</option>
+                    <option value="estado" th:selected="${'estado'.equals(ordenarPor)}">Por estado</option>
+                </select>
+            </label>
+        </div>
+        <div class="filtro-acciones">
+            <button type="submit" class="btn btn-primary">FILTRAR</button>
+            <a class="btn btn-secondary" th:href="@{/admin/reportes-filtrado}">LIMPIAR</a>
+            <button type="submit" formaction="/admin/reportes/pdf" class="btn btn-secondary">📄 PDF filtrado</button>
+            <button type="submit" formaction="/admin/reportes/excel" class="btn btn-secondary">📊 Excel filtrado</button>
+        </div>
+    </form>
 
     <section class="resumen-grid">
         <div class="card clientes">
@@ -170,6 +263,46 @@
                     <td>
                         <a class="btn btn-secondary btn-small"
                            th:href="@{/admin/reportes/cliente/{id}/pdf(id=${c.idCliente})}">PDF</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <div class="titulo-seccion">
+            <span>Sensores</span>
+            <span class="mono" th:text="${'(' + totalSensores + ' resultados)'}">(0 resultados)</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sensor</th>
+                    <th>Tipo</th>
+                    <th>Vehículo</th>
+                    <th>Placa</th>
+                    <th>Cliente</th>
+                    <th>Nivel</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${todosSensores.isEmpty()}">
+                    <td colspan="7" class="vacio">No hay sensores para los criterios consultados.</td>
+                </tr>
+                <tr th:each="s : ${todosSensores}">
+                    <td th:text="${s.nombreSensor}">Sensor</td>
+                    <td class="mono" th:text="${s.tipoSensor}">Tipo</td>
+                    <td th:text="${s.vehiculo != null ? s.vehiculo.nombreVehiculo : '-'}">Vehículo</td>
+                    <td class="mono" th:text="${s.vehiculo != null ? s.vehiculo.placa : '-'}">Placa</td>
+                    <td th:text="${s.vehiculo != null && s.vehiculo.cliente != null ? (s.vehiculo.cliente.nombreCliente + ' ' + s.vehiculo.cliente.apellidoCliente) : '-'}">Cliente</td>
+                    <td class="mono" th:text="${s.nivel != null ? s.nivel + '%' : '0%'}">0%</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${(s.nivel != null && s.nivel >= 70) ? 'falla' : (s.nivel != null && s.nivel >= 40 ? 'advertencia' : 'optimo')}"
+                              th:text="${(s.nivel != null && s.nivel >= 70) ? 'FALLA' : (s.nivel != null && s.nivel >= 40 ? 'ADVERTENCIA' : 'ÓPTIMO')}">
+                            ÓPTIMO
+                        </span>
                     </td>
                 </tr>
             </tbody>
