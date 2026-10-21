@@ -2,6 +2,7 @@ package com.example.sensores_vsc.controller;
 
 import com.example.sensores_vsc.model.Cliente;
 import com.example.sensores_vsc.model.Sensor;
+import com.example.sensores_vsc.model.Usuario;
 import com.example.sensores_vsc.model.Vehiculo;
 import com.example.sensores_vsc.repository.ClienteRepository;
 import com.example.sensores_vsc.repository.SensorRepository;
@@ -26,6 +27,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -77,7 +79,10 @@ public class AdminController {
     @GetMapping
     public String index(Model model) {
         model.addAttribute("clientes", clienteRepository.findAll());
+        model.addAttribute("vehiculos", vehiculoRepository.findAll());
+        model.addAttribute("sensores", sensorRepository.findAll());
         model.addAttribute("usuarios", usuarioRepository.findAll());
+        cargarTotales(model);
         return "admin/dashboard";
     }
 
@@ -115,6 +120,113 @@ public class AdminController {
     @PostMapping("/sensor/{id}/eliminar")
     public String eliminarSensor(@PathVariable Long id) {
         sensorRepository.deleteById(id);
+        return "redirect:/admin";
+    }
+
+    // ---------------------------------------------------------
+    // CREAR / ELIMINAR CLIENTE (CRUD - Create / Delete)
+    // ---------------------------------------------------------
+    @GetMapping("/cliente/nuevo")
+    public String nuevoCliente(Model model) {
+        model.addAttribute("error", "");
+        return "admin/crear-cliente";
+    }
+
+    @PostMapping("/cliente/crear")
+    public String crearCliente(@RequestParam String nombre,
+                               @RequestParam String apellido,
+                               @RequestParam String correo,
+                               @RequestParam String contrasena,
+                               Model model) {
+        model.addAttribute("error", "");
+        if (nombre.isBlank() || apellido.isBlank() || correo.isBlank() || contrasena.isBlank()) {
+            model.addAttribute("error", "Todos los campos son obligatorios.");
+            return "admin/crear-cliente";
+        }
+        if (!correo.contains("@") || !correo.contains(".")) {
+            model.addAttribute("error", "El correo no tiene un formato válido.");
+            return "admin/crear-cliente";
+        }
+        if (contrasena.length() < 6) {
+            model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
+            return "admin/crear-cliente";
+        }
+        if (clienteRepository.findByCorreo(correo.trim()).isPresent()) {
+            model.addAttribute("error", "Ya existe un cliente con ese correo.");
+            return "admin/crear-cliente";
+        }
+        Cliente c = new Cliente();
+        c.setNombreCliente(nombre.trim());
+        c.setApellidoCliente(apellido.trim());
+        c.setCorreo(correo.trim());
+        c.setContrasena(passwordEncoder.encode(contrasena));
+        c.setEstado("activo");
+        clienteRepository.save(c);
+        return "redirect:/admin";
+    }
+
+    @PostMapping("/cliente/{id}/eliminar")
+    public String eliminarCliente(@PathVariable Long id) {
+        List<Vehiculo> vehiculos = vehiculoRepository.findByClienteIdCliente(id);
+        for (Vehiculo v : vehiculos) {
+            sensorRepository.deleteByVehiculoIdVehiculo(v.getIdVehiculo());
+            vehiculoRepository.deleteById(v.getIdVehiculo());
+        }
+        clienteRepository.deleteById(id);
+        return "redirect:/admin";
+    }
+
+    // ---------------------------------------------------------
+    // CREAR VEHÍCULO (CRUD - Create)
+    // ---------------------------------------------------------
+    @GetMapping("/vehiculo/nuevo")
+    public String nuevoVehiculo(Model model) {
+        model.addAttribute("clientes", clienteRepository.findAll());
+        model.addAttribute("error", "");
+        return "admin/crear-vehiculo";
+    }
+
+    @PostMapping("/vehiculo/crear")
+    public String crearVehiculo(@RequestParam Long clienteId,
+                                @RequestParam String nombreVehiculo,
+                                @RequestParam String marca,
+                                @RequestParam(required = false) String modelo,
+                                @RequestParam String color,
+                                @RequestParam String placa,
+                                @RequestParam String tipoPlaca,
+                                @RequestParam(required = false) String elmMac,
+                                Model model) {
+        model.addAttribute("clientes", clienteRepository.findAll());
+        model.addAttribute("error", "");
+
+        String placaNormalizada = placa.toUpperCase().trim();
+        if (nombreVehiculo.isBlank() || marca.isBlank() || color.isBlank() || placaNormalizada.isBlank()) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/crear-vehiculo";
+        }
+        if (!placaNormalizada.matches("^[A-Z]{3}[-]?[0-9]{3}$")) {
+            model.addAttribute("error", "Formato de placa inválido. Ejemplo: ABC123 o ABC-123.");
+            return "admin/crear-vehiculo";
+        }
+        if (vehiculoRepository.findByPlaca(placaNormalizada).isPresent()) {
+            model.addAttribute("error", "Ya existe un vehículo con esa placa.");
+            return "admin/crear-vehiculo";
+        }
+        Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
+        if (cliente == null) {
+            model.addAttribute("error", "Selecciona un cliente válido.");
+            return "admin/crear-vehiculo";
+        }
+        Vehiculo v = new Vehiculo();
+        v.setCliente(cliente);
+        v.setNombreVehiculo(nombreVehiculo.trim());
+        v.setMarca(marca.trim());
+        v.setModelo(modelo == null || modelo.isBlank() ? null : modelo.trim());
+        v.setColor(color.trim());
+        v.setPlaca(placaNormalizada);
+        v.setTipoPlaca(tipoPlaca);
+        v.setElmMac(elmMac == null || elmMac.isBlank() ? null : elmMac.trim());
+        vehiculoRepository.save(v);
         return "redirect:/admin";
     }
 
@@ -174,21 +286,25 @@ public class AdminController {
     public String showEditarVehiculo(@PathVariable Long id, Model model) {
         Vehiculo v = vehiculoRepository.findById(id).orElseThrow();
         model.addAttribute("vehiculo", v);
+        model.addAttribute("clientes", clienteRepository.findAll());
         model.addAttribute("error", "");
         return "admin/editar-vehiculo";
     }
 
     @PostMapping("/vehiculo/{id}/editar")
     public String editarVehiculo(@PathVariable Long id,
+                                 @RequestParam(required = false) Long clienteId,
                                  @RequestParam String nombreVehiculo,
                                  @RequestParam String marca,
                                  @RequestParam(required = false) String modelo,
                                  @RequestParam String color,
                                  @RequestParam String placa,
                                  @RequestParam String tipoPlaca,
+                                 @RequestParam(required = false) String elmMac,
                                  Model model) {
         Vehiculo v = vehiculoRepository.findById(id).orElseThrow();
         model.addAttribute("vehiculo", v);
+        model.addAttribute("clientes", clienteRepository.findAll());
 
         String placaNormalizada = placa.toUpperCase().trim();
         if (nombreVehiculo.isBlank() || marca.isBlank() || color.isBlank() || placaNormalizada.isBlank()) {
@@ -211,8 +327,106 @@ public class AdminController {
         v.setColor(color.trim());
         v.setPlaca(placaNormalizada);
         v.setTipoPlaca(tipoPlaca);
+        v.setElmMac(elmMac == null || elmMac.isBlank() ? null : elmMac.trim());
+        if (clienteId != null
+                && (v.getCliente() == null || !clienteId.equals(v.getCliente().getIdCliente()))) {
+            clienteRepository.findById(clienteId).ifPresent(v::setCliente);
+        }
         vehiculoRepository.save(v);
         return "redirect:/admin";
+    }
+
+    // ---------------------------------------------------------
+    // CRUD DE SENSORES (Create / Update)
+    // ---------------------------------------------------------
+    @GetMapping("/sensor/nuevo")
+    public String nuevoSensor(Model model) {
+        model.addAttribute("vehiculos", vehiculoRepository.findAll());
+        model.addAttribute("error", "");
+        return "admin/crear-sensor";
+    }
+
+    @PostMapping("/sensor/crear")
+    public String crearSensor(@RequestParam Long vehiculoId,
+                              @RequestParam String nombreSensor,
+                              @RequestParam String tipoSensor,
+                              @RequestParam Integer nivel,
+                              @RequestParam(required = false) String tipoDano,
+                              Model model) {
+        model.addAttribute("vehiculos", vehiculoRepository.findAll());
+        model.addAttribute("error", "");
+        if (nombreSensor.isBlank() || tipoSensor.isBlank() || nivel == null) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/crear-sensor";
+        }
+        if (nivel < 0 || nivel > 100) {
+            model.addAttribute("error", "El nivel debe estar entre 0 y 100.");
+            return "admin/crear-sensor";
+        }
+        Vehiculo vehiculo = vehiculoRepository.findById(vehiculoId).orElse(null);
+        if (vehiculo == null) {
+            model.addAttribute("error", "Selecciona un vehículo válido.");
+            return "admin/crear-sensor";
+        }
+        Sensor s = new Sensor();
+        s.setVehiculo(vehiculo);
+        s.setNombreSensor(nombreSensor.trim());
+        s.setTipoSensor(tipoSensor.trim());
+        s.setNivel(nivel);
+        s.setTipoDano(tipoDano == null || tipoDano.isBlank() ? null : tipoDano.trim());
+        s.setEstado(estadoDesdeNivel(nivel));
+        sensorRepository.save(s);
+        return "redirect:/admin";
+    }
+
+    @GetMapping("/sensor/{id}/editar")
+    public String showEditarSensor(@PathVariable Long id, Model model) {
+        Sensor s = sensorRepository.findById(id).orElseThrow();
+        model.addAttribute("vehiculos", vehiculoRepository.findAll());
+        model.addAttribute("sensor", s);
+        model.addAttribute("error", "");
+        return "admin/editar-sensor";
+    }
+
+    @PostMapping("/sensor/{id}/editar")
+    public String editarSensor(@PathVariable Long id,
+                               @RequestParam Long vehiculoId,
+                               @RequestParam String nombreSensor,
+                               @RequestParam String tipoSensor,
+                               @RequestParam Integer nivel,
+                               @RequestParam(required = false) String tipoDano,
+                               Model model) {
+        Sensor s = sensorRepository.findById(id).orElseThrow();
+        model.addAttribute("vehiculos", vehiculoRepository.findAll());
+        model.addAttribute("sensor", s);
+        model.addAttribute("error", "");
+        if (nombreSensor.isBlank() || tipoSensor.isBlank() || nivel == null) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/editar-sensor";
+        }
+        if (nivel < 0 || nivel > 100) {
+            model.addAttribute("error", "El nivel debe estar entre 0 y 100.");
+            return "admin/editar-sensor";
+        }
+        Vehiculo vehiculo = vehiculoRepository.findById(vehiculoId).orElse(null);
+        if (vehiculo == null) {
+            model.addAttribute("error", "Selecciona un vehículo válido.");
+            return "admin/editar-sensor";
+        }
+        s.setVehiculo(vehiculo);
+        s.setNombreSensor(nombreSensor.trim());
+        s.setTipoSensor(tipoSensor.trim());
+        s.setNivel(nivel);
+        s.setTipoDano(tipoDano == null || tipoDano.isBlank() ? null : tipoDano.trim());
+        s.setEstado(estadoDesdeNivel(nivel));
+        sensorRepository.save(s);
+        return "redirect:/admin";
+    }
+
+    private String estadoDesdeNivel(int nivel) {
+        if (nivel >= 70) return "FALLA";
+        if (nivel >= 40) return "ADVERTENCIA";
+        return "OK";
     }
 
     @GetMapping("/reportes/pdf")
@@ -522,6 +736,121 @@ public class AdminController {
         cell.setPadding(6);
         cell.setBorderColor(GRIS_CLARO);
         return cell;
+    }
+
+    // ---------------------------------------------------------
+    // CRUD DE USUARIOS ADMIN (Create / Update / Delete)
+    // ---------------------------------------------------------
+    @GetMapping("/usuario/nuevo")
+    public String nuevoUsuario(Model model) {
+        model.addAttribute("error", "");
+        return "admin/crear-usuario";
+    }
+
+    @PostMapping("/usuario/crear")
+    public String crearUsuario(@RequestParam String nombre,
+                               @RequestParam String correo,
+                               @RequestParam String contrasena,
+                               @RequestParam String rol,
+                               Model model) {
+        model.addAttribute("error", "");
+        if (nombre.isBlank() || correo.isBlank() || contrasena.isBlank()) {
+            model.addAttribute("error", "Todos los campos son obligatorios.");
+            return "admin/crear-usuario";
+        }
+        if (!correo.contains("@") || !correo.contains(".")) {
+            model.addAttribute("error", "El correo no tiene un formato válido.");
+            return "admin/crear-usuario";
+        }
+        if (contrasena.length() < 6) {
+            model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
+            return "admin/crear-usuario";
+        }
+        if (usuarioRepository.findByCorreo(correo.trim()).isPresent()) {
+            model.addAttribute("error", "Ya existe un usuario con ese correo.");
+            return "admin/crear-usuario";
+        }
+        Usuario u = new Usuario();
+        u.setNombre(nombre.trim());
+        u.setCorreo(correo.trim());
+        u.setContrasena(passwordEncoder.encode(contrasena));
+        u.setRol(rol.isBlank() ? "ADMIN" : rol.trim());
+        usuarioRepository.save(u);
+        return "redirect:/admin";
+    }
+
+    @GetMapping("/usuario/{id}/editar")
+    public String showEditarUsuario(@PathVariable Long id, Model model) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow();
+        model.addAttribute("usuario", u);
+        model.addAttribute("error", "");
+        return "admin/editar-usuario";
+    }
+
+    @PostMapping("/usuario/{id}/editar")
+    public String editarUsuario(@PathVariable Long id,
+                                @RequestParam String nombre,
+                                @RequestParam String correo,
+                                @RequestParam(required = false) String contrasena,
+                                @RequestParam String rol,
+                                Model model) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow();
+        model.addAttribute("usuario", u);
+        model.addAttribute("error", "");
+        if (nombre.isBlank() || correo.isBlank()) {
+            model.addAttribute("error", "Todos los campos obligatorios deben estar completos.");
+            return "admin/editar-usuario";
+        }
+        if (!correo.contains("@") || !correo.contains(".")) {
+            model.addAttribute("error", "El correo no tiene un formato válido.");
+            return "admin/editar-usuario";
+        }
+        Optional<Usuario> existente = usuarioRepository.findByCorreo(correo.trim());
+        if (existente.isPresent() && !existente.get().getIdUsuario().equals(id)) {
+            model.addAttribute("error", "Ya existe un usuario con ese correo.");
+            return "admin/editar-usuario";
+        }
+        if (contrasena != null && !contrasena.isBlank() && contrasena.length() < 6) {
+            model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
+            return "admin/editar-usuario";
+        }
+        u.setNombre(nombre.trim());
+        u.setCorreo(correo.trim());
+        if (contrasena != null && !contrasena.isBlank()) {
+            u.setContrasena(passwordEncoder.encode(contrasena));
+        }
+        u.setRol(rol.isBlank() ? u.getRol() : rol.trim());
+        usuarioRepository.save(u);
+        return "redirect:/admin";
+    }
+
+    @PostMapping("/usuario/{id}/eliminar")
+    public String eliminarUsuario(@PathVariable Long id, Authentication auth) {
+        String actual = auth != null ? auth.getName() : null;
+        long totalUsuarios = usuarioRepository.count();
+        Usuario u = usuarioRepository.findById(id).orElseThrow();
+        // No permitir eliminarse a sí mismo ni dejar el sistema sin administrador
+        if ((actual != null && actual.equalsIgnoreCase(u.getCorreo())) || totalUsuarios <= 1) {
+            return "redirect:/admin";
+        }
+        usuarioRepository.deleteById(id);
+        return "redirect:/admin";
+    }
+
+    private void cargarTotales(Model model) {
+        List<Sensor> sensores = sensorRepository.findAll();
+        long totalFallas = sensores.stream()
+                .filter(s -> s.getNivel() != null && UmbralesReporte.INSTANCIA.esFalla(s.getNivel())).count();
+        long totalAdvertencias = sensores.stream()
+                .filter(s -> s.getNivel() != null
+                        && UmbralesReporte.INSTANCIA.esAdvertencia(s.getNivel())).count();
+        model.addAttribute("totalClientes", clienteRepository.count());
+        model.addAttribute("totalVehiculos", vehiculoRepository.count());
+        model.addAttribute("totalSensores", (long) sensores.size());
+        model.addAttribute("totalUsuarios", usuarioRepository.count());
+        model.addAttribute("totalFallas", totalFallas);
+        model.addAttribute("totalAdvertencias", totalAdvertencias);
+        model.addAttribute("sensoresOk", (long) sensores.size() - totalFallas - totalAdvertencias);
     }
 
     private void cargarDatosReportes(Model model) {

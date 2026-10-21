@@ -10,4 +10,4 @@ html[data-theme="light"] picture {
 }
 html[data-theme="light"] .theme-btn {
     filter: invert(1) hue-rotate(180deg);
-}
+}s

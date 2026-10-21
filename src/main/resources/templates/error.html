@@ -4,37 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error — AutoSen</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        :root{--black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;--accent:#e63946;--teal:#2ec4b6;--white:#f0eff4;--muted:#7a7a96;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;}
-        body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
-        .error-code{font-family:var(--font-display);font-size:10rem;line-height:1;color:var(--accent);opacity:.15;position:absolute;user-select:none;}
-        .content{position:relative;z-index:1;}
-        .tag{font-family:var(--font-mono);font-size:.7rem;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem;background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);padding:.4rem 1rem;border-radius:20px;display:inline-block;}
-        h1{font-family:var(--font-display);font-size:4rem;letter-spacing:.03em;margin-bottom:.5rem;}
-        h1 span{color:var(--accent);}
-        .message{color:var(--muted);font-size:1rem;margin-bottom:2.5rem;max-width:400px;line-height:1.6;}
-        .actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
-        .btn-primary{background:var(--accent);color:#fff;padding:.75rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;transition:opacity .2s;}
-        .btn-primary:hover{opacity:.85;}
-        .btn-secondary{background:none;border:1px solid var(--border);color:var(--white);padding:.75rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1rem;letter-spacing:.1em;transition:border-color .2s;}
-        .btn-secondary:hover{border-color:var(--white);}
-        .error-detail{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:3rem;background:var(--card);border:1px solid var(--border);padding:.75rem 1.5rem;border-radius:3px;}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070b14;--surface:#0f172a;--surface2:#151e36;
+            --border:rgba(148,163,184,.14);--border2:rgba(148,163,184,.24);
+            --text:#e6edf7;--muted:#8ea3c0;
+            --indigo:#6366f1;--violet:#8b5cf6;--cyan:#22d3ee;--emerald:#34d399;--rose:#fb7185;
+            --grad:linear-gradient(135deg,#6366f1,#22d3ee);
+            --grad-warm:linear-gradient(135deg,#8b5cf6,#fb7185);
+            --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;overflow:hidden;-webkit-font-smoothing:antialiased}
+        body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 420px at 90% -10%,rgba(139,92,246,.16),transparent 60%),radial-gradient(820px 420px at -10% 25%,rgba(34,211,238,.1),transparent 55%);pointer-events:none;z-index:-1}
+        .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.45;pointer-events:none;animation:bf 12s ease-in-out infinite}
+        .orb-1{width:420px;height:420px;background:radial-gradient(circle,#6366f1,transparent 65%);top:-140px;right:-80px}
+        .orb-2{width:340px;height:340px;background:radial-gradient(circle,#fb7185,transparent 65%);bottom:-120px;left:-90px;animation-delay:-5s}
+        @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(22px,-28px) scale(1.06)}}
+        .error-code{position:relative;font-family:var(--font-display);font-weight:700;font-size:min(34vw,14rem);line-height:1;background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.9;filter:drop-shadow(0 24px 60px rgba(139,92,246,.35))}
+        .content{position:relative;z-index:1;max-width:520px}
+        .ic-box{width:64px;height:64px;border-radius:18px;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35);display:grid;place-items:center;margin:0 auto 1.4rem;color:#fda4af}
+        .ic-box svg{width:30px;height:30px}
+        .tag{display:inline-block;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#fda4af;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);padding:.42rem 1rem;border-radius:999px;margin-bottom:1.1rem}
+        h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.9rem,4vw,2.8rem);letter-spacing:-.01em;margin-bottom:.7rem}
+        .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .grad-text-warm{background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .message{color:var(--muted);font-size:1rem;line-height:1.7;margin-bottom:2.4rem}
+        .actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+        .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.55rem;padding:.9rem 1.7rem;border-radius:999px;font-weight:600;font-size:.93rem;text-decoration:none;overflow:hidden;transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s;white-space:nowrap}
+        .btn-primary{background:var(--grad);color:#fff;box-shadow:0 12px 32px -10px rgba(99,102,241,.55)}
+        .btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 46px -12px rgba(99,102,241,.78)}
+        .btn-primary::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .6s}
+        .btn-primary:hover::after{left:130%}
+        .btn-ghost{background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--text)}
+        .btn-ghost:hover{border-color:rgba(34,211,238,.7);color:var(--cyan);transform:translateY(-3px)}
+        .btn svg{width:16px;height:16px}
+        .error-detail{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:2.8rem;background:rgba(15,23,42,.8);border:1px solid var(--border);padding:.7rem 1.3rem;border-radius:12px;display:inline-flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+        .theme-toggle{position:fixed!important;bottom:22px!important;right:22px!important;z-index:9999!important;width:46px!important;height:46px!important;border-radius:14px!important;border:1px solid var(--border2)!important;background:rgba(15,23,42,.9)!important;color:var(--text)!important;font-size:18px!important;cursor:pointer;box-shadow:0 14px 40px -14px rgba(2,6,23,.85)!important;backdrop-filter:blur(10px);display:flex!important;align-items:center;justify-content:center;padding:0!important;transition:.3s!important}
+        .theme-toggle:hover{transform:translateY(-3px) scale(1.06)!important;border-color:rgba(99,102,241,.7)!important}
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
     </style>
 </head>
 <body>
 
+    <span class="orb orb-1"></span><span class="orb orb-2"></span>
+
     <div class="error-code" th:text="${status}">404</div>
 
     <div class="content">
-        <div class="tag">// error del sistema</div>
+        <div class="ic-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        </div>
+        <span class="tag">// error del sistema</span>
 
         <h1 th:switch="${status}">
-            <th:block th:case="404">PÁGINA <span>NO ENCONTRADA</span></th:block>
-            <th:block th:case="403">ACCESO <span>DENEGADO</span></th:block>
-            <th:block th:case="500">ERROR <span>DEL SERVIDOR</span></th:block>
-            <th:block th:case="*">ALGO SALIÓ <span>MAL</span></th:block>
+            <th:block th:case="404">PÁGINA <span class="grad-text">NO ENCONTRADA</span></th:block>
+            <th:block th:case="403">ACCESO <span class="grad-text-warm">DENEGADO</span></th:block>
+            <th:block th:case="500">ERROR <span class="grad-text-warm">DEL SERVIDOR</span></th:block>
+            <th:block th:case="*">ALGO SALIÓ <span class="grad-text">MAL</span></th:block>
         </h1>
 
         <p class="message" th:switch="${status}">
@@ -45,14 +76,17 @@
         </p>
 
         <div class="actions">
-            <a href="/" class="btn-primary">← VOLVER AL INICIO</a>
-            <a href="/dashboard" class="btn-secondary">IR AL DASHBOARD</a>
+            <a href="/" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                Volver al inicio
+            </a>
+            <a href="/dashboard" class="btn btn-ghost">Ir al dashboard</a>
         </div>
 
         <div class="error-detail">
-            <span th:text="'Código: ' + ${status}"></span>
-            &nbsp;·&nbsp;
-            <span th:text="${error}"></span>
+            <span th:text="'Código: ' + ${status}">Código: 404</span>
+            <span>·</span>
+            <span th:text="${error}">Not Found</span>
         </div>
     </div>
 

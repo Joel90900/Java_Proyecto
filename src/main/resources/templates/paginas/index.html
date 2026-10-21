@@ -4,364 +4,467 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoSen — Sistema de Monitoreo Vehicular</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         :root{
-            --black:#0a0a0c;--dark:#111116;--card:#16161e;--border:#2a2a38;
-            --accent:#030853;--teal:#2ec4b6;--gold:#f4a261;--white:#f0eff4;--muted:#7a7a96;
-            --font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;
+            --bg:#070b14;--bg2:#0b1120;--surface:#0f172a;--surface2:#151e36;
+            --border:rgba(148,163,184,.14);--border2:rgba(148,163,184,.24);
+            --text:#e6edf7;--muted:#8ea3c0;
+            --indigo:#6366f1;--violet:#8b5cf6;--cyan:#22d3ee;--emerald:#34d399;--amber:#fbbf24;--rose:#fb7185;
+            --grad:linear-gradient(135deg,#6366f1,#22d3ee);
+            --grad-warm:linear-gradient(135deg,#8b5cf6,#fb7185);
+            --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+            --radius:20px;--shadow:0 30px 70px -28px rgba(2,6,23,.85);
         }
-        html{scroll-behavior:smooth;}
-        body{background:var(--black);color:var(--white);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
-        a{color:inherit;}
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--font-body);overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+        ::selection{background:rgba(99,102,241,.45);color:#fff}
+        a{color:inherit;text-decoration:none}
+        button{font-family:inherit}
+        ::-webkit-scrollbar{width:10px}
+        ::-webkit-scrollbar-track{background:var(--bg)}
+        ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:20px}
+        body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 420px at 92% -8%,rgba(139,92,246,.15),transparent 60%),radial-gradient(820px 420px at -8% 22%,rgba(34,211,238,.10),transparent 55%);pointer-events:none;z-index:-1}
 
-        /* NAV */
-        nav{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 3rem;border-bottom:1px solid var(--border);position:relative;z-index:10;}
-        .nav-logo{font-family:var(--font-display);font-size:1.6rem;letter-spacing:.05em;text-decoration:none;color:var(--white);}
-        .nav-logo b{color:var(--teal);}
-        .nav-links{display:flex;gap:1rem;align-items:center;}
-        .btn-outline{background:none;border:1px solid var(--border);color:var(--white);padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:border-color .2s,color .2s;}
-        .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
-        .btn-filled{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:.5rem 1.2rem;border-radius:3px;text-decoration:none;font-size:.875rem;transition:opacity .2s;}
-        .btn-filled:hover{opacity:.85;}
+        /* NAVBAR */
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.15rem 0;transition:padding .35s,background .35s,box-shadow .35s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+        .nav.scrolled{background:rgba(7,11,20,.85);padding:.6rem 0;box-shadow:0 14px 40px -22px rgba(2,6,23,.9);border-bottom:1px solid var(--border)}
+        .nav-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+        .brand{display:flex;align-items:center;gap:.65rem;font-family:var(--font-display);font-weight:700;font-size:1.35rem;letter-spacing:.01em;color:var(--text)}
+        .brand .logo-orb{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:.74rem;color:#fff;box-shadow:0 10px 26px -6px rgba(99,102,241,.6);position:relative}
+        .brand .logo-orb::after{content:"";position:absolute;inset:0;border-radius:12px;background:inherit;filter:blur(12px);opacity:.55;z-index:-1}
+        .nav-links{display:flex;align-items:center;gap:.35rem;list-style:none}
+        .nav-link{display:inline-block;position:relative;padding:.55rem .95rem;border-radius:10px;color:var(--muted);font-size:.92rem;font-weight:500;transition:.25s}
+        .nav-link:hover{color:#fff;background:rgba(255,255,255,.05)}
+        .nav-link.active{color:#fff}
+        .nav-cta{display:flex;align-items:center;gap:.6rem}
+        .burger{display:none;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:.5rem;z-index:110}
+        .burger span{width:24px;height:2px;background:var(--text);border-radius:4px;transition:.3s}
+        .burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+        .burger.open span:nth-child(2){opacity:0}
+        .burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
-        /* HERO */
-        .hero{display:flex;align-items:center;justify-content:space-between;gap:3rem;padding:4rem 3rem;max-width:1400px;margin:0 auto;flex-wrap:wrap;}
-        .hero-content{flex:1;min-width:320px;max-width:560px;}
-        .hero-eyebrow{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.5rem;background:rgba(46,196,182,.1);border:1px solid rgba(46,196,182,.3);padding:.4rem 1rem;border-radius:20px;display:inline-block;}
-        .hero-title{font-family:var(--font-display);font-size:4.5rem;letter-spacing:.03em;line-height:.95;margin-bottom:1.5rem;}
-        .line-accent{color:var(--accent);-webkit-text-stroke:1px var(--teal);}
-        .line-outline{color:transparent;-webkit-text-stroke:1.5px var(--white);}
-        .hero-desc{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;}
-        .hero-ctas{margin-bottom:3rem;}
-        .btn-primary{background:var(--accent);color:#fff;padding:.85rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.1em;transition:opacity .2s,transform .2s;display:inline-block;}
-        .btn-primary:hover{opacity:.85;transform:translateY(-2px);}
-        .hero-stats{display:flex;gap:2.5rem;}
-        .hero-stats .stat-num{font-family:var(--font-display);font-size:2.2rem;color:var(--teal);}
-        .hero-stats .stat-num span{color:var(--gold);}
-        .hero-stats .stat-label{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:.25rem;}
+        /* BUTTONS */
+        .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.55rem;padding:.8rem 1.55rem;border-radius:999px;font-weight:600;font-size:.93rem;font-family:var(--font-body);cursor:pointer;border:0;text-decoration:none;overflow:hidden;transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s;white-space:nowrap}
+        .btn-primary{background:var(--grad);color:#fff;box-shadow:0 12px 32px -10px rgba(99,102,241,.55)}
+        .btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 46px -12px rgba(99,102,241,.78)}
+        .btn-primary::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .6s}
+        .btn-primary:hover::after{left:130%}
+        .btn-ghost{background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--text);backdrop-filter:blur(8px)}
+        .btn-ghost:hover{border-color:rgba(99,102,241,.75);background:rgba(99,102,241,.1);transform:translateY(-3px);color:#fff}
+        .chevron{width:15px;height:15px;transition:transform .3s}
+        .btn:hover .chevron{transform:translateX(4px)}
+/* HERO */
+        .hero{position:relative;padding:9.5rem 1.5rem 5rem;display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;max-width:1200px;margin:0 auto;align-items:center;min-height:100vh}
+        .grid-overlay{position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);pointer-events:none}
+        .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;pointer-events:none;animation:float 12s ease-in-out infinite}
+        .orb-1{width:420px;height:420px;background:radial-gradient(circle,#6366f1,transparent 65%);top:-120px;right:-80px}
+        .orb-2{width:340px;height:340px;background:radial-gradient(circle,#22d3ee,transparent 65%);bottom:-60px;left:-110px;animation-delay:-5s}
+        .orb-3{width:260px;height:260px;background:radial-gradient(circle,#8b5cf6,transparent 65%);top:30%;left:44%;animation-delay:-8s;opacity:.32}
+        @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(24px,-30px) scale(1.06)}}
+        .hero-tag{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);padding:.45rem 1.05rem;border-radius:999px;margin-bottom:1.6rem}
+        .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(34,211,238,.6);animation:ping 2s infinite}
+        @keyframes ping{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 10px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+        .hero h1{font-family:var(--font-display);font-weight:700;font-size:clamp(2.7rem,5.4vw,4.35rem);line-height:1.04;letter-spacing:-.02em}
+        .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .grad-text-warm{background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .grad-text-green{background:linear-gradient(135deg,#22d3ee,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .hero-sub{color:var(--muted);font-size:1.07rem;line-height:1.75;margin:1.5rem 0 2.2rem;max-width:520px}
+        .hero-ctas{display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:2.6rem}
+        .hero-stats{display:flex;gap:2.4rem;flex-wrap:wrap}
+        .hstat .num{font-family:var(--font-display);font-weight:700;font-size:2.05rem;line-height:1}
+        .hstat .num em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .hstat .lbl{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.3rem;display:block}
+        .hstat+.hstat{border-left:1px solid var(--border);padding-left:2.4rem}
+        .hero-visual{position:relative;perspective:1100px}
+        .panel-card{position:relative;background:linear-gradient(160deg,rgba(35,48,75,.92),rgba(15,23,42,.88));border:1px solid var(--border2);border-radius:26px;padding:1.7rem;backdrop-filter:blur(16px);box-shadow:var(--shadow);transform:rotateY(-7deg) rotateX(2deg);animation:float 9s ease-in-out infinite}
+        .panel-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem}
+        .panel-title{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+        .live{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);font-size:.66rem;color:var(--emerald)}
+        .live i{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 0 rgba(52,211,153,.5);animation:ping 1.8s infinite}
+        .metric{margin-bottom:1.1rem}
+        .metric-head{display:flex;justify-content:space-between;margin-bottom:.45rem;font-size:.82rem}
+        .metric-head .m-name{color:var(--muted)}
+        .metric-head .m-val{font-family:var(--font-mono);font-size:.78rem}
+        .mtrack{height:8px;background:rgba(148,163,184,.12);border-radius:99px;overflow:hidden}
+        .mfill{height:100%;border-radius:99px;animation:fill 2.4s cubic-bezier(.16,1,.3,1) forwards}
+        @keyframes fill{from{width:0}}
+        .radar{display:grid;place-items:center;height:150px;margin-top:.4rem;position:relative}
+        .gauge{width:118px;height:118px;border-radius:50%;background:conic-gradient(from -90deg,#6366f1 0deg,#22d3ee 130deg,#34d399 215deg,rgba(148,163,184,.12) 215deg 360deg);display:grid;place-items:center;position:relative}
+        .gauge::before{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--surface)}
+        .gauge b{position:relative;z-index:1;font-family:var(--font-display);font-weight:700;font-size:1.65rem}
+        .gauge small{display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--muted);text-align:center;font-weight:400}
+        .float-chip{position:absolute;font-family:var(--font-mono);font-size:.68rem;background:rgba(15,23,42,.92);border:1px solid var(--border2);border-radius:12px;padding:.55rem .85rem;backdrop-filter:blur(10px);box-shadow:0 14px 34px -14px rgba(2,6,23,.85);display:flex;align-items:center;gap:.5rem}
+        .float-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .fc-1{top:-22px;left:-30px;animation:float 7s ease-in-out infinite}
+        .fc-2{bottom:-20px;right:-26px;animation:float 9s ease-in-out -3s infinite}
+        .fc-3{top:38%;right:-38px;animation:float 8s ease-in-out -5s infinite}
+        .fc-2 i{background:#fb7185}.fc-3 i{background:#fbbf24}
+/* MARQUEE */
+        .marquee{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);padding:.95rem 0}
+        .mq-track{display:flex;width:max-content;animation:slide 32s linear infinite}
+        .mq-track span{display:flex;align-items:center;gap:2.2rem;padding-right:2.2rem;font-family:var(--font-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+        .mq-track span::before{content:"◆";color:var(--indigo);font-size:.6rem}
+        @keyframes slide{to{transform:translateX(-50%)}}
 
-        /* HERO VISUAL */
-        .hero-visual{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;flex:1;min-width:320px;}
-        .car-diagram{position:relative;width:480px;max-width:100%;height:340px;}
-        .car-body{width:100%;height:100%;}
+        /* SECTIONS */
+        .section{max-width:1200px;margin:0 auto;padding:6rem 1.5rem}
+        .sec-head{text-align:center;max-width:640px;margin:0 auto 3.5rem}
+        .sec-tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.22);padding:.4rem 1rem;border-radius:999px;margin-bottom:1.1rem}
+        .sec-title{font-family:var(--font-display);font-size:clamp(1.9rem,3.4vw,2.7rem);letter-spacing:-.01em;line-height:1.12}
+        .sec-desc{color:var(--muted);margin-top:1rem;font-size:1rem;line-height:1.7}
+        .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.4rem}
+        .grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.4rem}
+        .card{position:relative;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:1.9rem;overflow:hidden;transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .4s,box-shadow .4s}
+        .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);opacity:0;transition:opacity .4s}
+        .card:hover{transform:translateY(-8px);border-color:rgba(99,102,241,.5);box-shadow:0 26px 60px -24px rgba(99,102,241,.35)}
+        .card:hover::before{opacity:1}
+        .card-glow{position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.22),transparent 70%);top:-80px;right:-80px;opacity:0;transition:opacity .5s;pointer-events:none}
+        .card:hover .card-glow{opacity:1}
+        .card-icon{width:54px;height:54px;border-radius:16px;background:var(--grad);display:grid;place-items:center;margin-bottom:1.25rem;color:#fff;box-shadow:0 12px 28px -8px rgba(99,102,241,.55)}
+        .card-icon svg{width:26px;height:26px}
+        .card h3{font-family:var(--font-display);font-size:1.18rem;margin-bottom:.55rem;letter-spacing:-.01em}
+        .card p{color:var(--muted);font-size:.9rem;line-height:1.65}
+        .num-tag{position:absolute;top:1.5rem;right:1.6rem;font-family:var(--font-mono);font-size:.72rem;color:rgba(148,163,184,.5)}
 
-        .sensor-dot{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(3,8,83,.25),0 0 20px rgba(3,8,83,.6);cursor:pointer;transition:transform .2s;animation:sensorBlink 2s ease-in-out infinite;}
-        .sensor-dot:nth-child(2){animation-delay:.4s;}
-        .sensor-dot:nth-child(3){animation-delay:.8s;background:var(--gold);box-shadow:0 0 0 4px rgba(244,162,97,.25),0 0 20px rgba(244,162,97,.6);}
-        .sensor-dot:nth-child(4){animation-delay:1.2s;}
-        .sensor-dot:nth-child(5){animation-delay:.2s;background:#2ec4b6;box-shadow:0 0 0 4px rgba(46,196,182,.25),0 0 20px rgba(46,196,182,.6);}
-        @keyframes sensorBlink{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.3);}}
-        .sensor-dot:hover{transform:scale(1.6) !important;}
-
-        .hud-card,.hud-card2{position:absolute;background:rgba(22,22,30,.9);border:1px solid var(--border);border-radius:6px;padding:.9rem 1.1rem;backdrop-filter:blur(6px);}
-        .hud-card{bottom:0;left:-10px;}
-        .hud-title{font-family:var(--font-mono);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;}
-        .hud-value{font-family:var(--font-display);font-size:1.8rem;color:var(--white);line-height:1;}
-        .hud-sub{font-family:var(--font-mono);font-size:.6rem;color:var(--teal);margin-top:.3rem;}
-        .hud-card2{top:0;right:-10px;display:flex;flex-direction:column;gap:.4rem;}
-        .status-row{display:flex;align-items:center;gap:.5rem;}
-        .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-        .status-dot.ok{background:var(--teal);}
-        .status-dot.warn{background:var(--gold);}
-        .status-dot.err{background:var(--accent);box-shadow:0 0 6px rgba(3,8,83,.8);}
-        .status-text{font-family:var(--font-mono);font-size:.65rem;color:var(--white);white-space:nowrap;}
-
-        /* MARQUEE */
-        .marquee-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--dark);overflow:hidden;padding:.9rem 0;}
-        .marquee-inner{display:flex;gap:3rem;width:max-content;animation:marqueeScroll 28s linear infinite;}
-        .marquee-item{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
-        .marquee-item::after{content:'◆';color:var(--teal);margin-left:3rem;}
-        @keyframes marqueeScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-
-        /* SECTION SHARED */
-        .section{padding:5rem 3rem;max-width:1200px;margin:0 auto;}
-        .section-header{text-align:center;margin-bottom:3rem;}
-        .section-tag{font-family:var(--font-mono);font-size:.7rem;color:var(--teal);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem;}
-        .section-title{font-family:var(--font-display);font-size:2.75rem;letter-spacing:.03em;line-height:1;}
-
-        /* SERVICES */
-        .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
-        .service-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2rem;position:relative;transition:border-color .2s,transform .2s;}
-        .service-card:hover{border-color:var(--teal);transform:translateY(-3px);}
-        .service-num{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:1rem;}
-        .service-icon{font-size:1.8rem;margin-bottom:1rem;}
-        .service-title{font-family:var(--font-display);font-size:1.3rem;letter-spacing:.03em;margin-bottom:.75rem;color:var(--white);}
-        .service-desc{font-size:.875rem;color:var(--muted);line-height:1.6;}
-
-        /* HOW SECTION (new) */
-        .how-section{padding:5rem 3rem;background:var(--dark);}
-        .how-section .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;max-width:1100px;margin:0 auto;}
-        .how-section .step{text-align:center;padding:1.5rem;}
-        .how-section .step-num{font-family:var(--font-display);font-size:3.5rem;color:rgba(3,8,83,.35);line-height:1;margin-bottom:.5rem;}
-        .how-section .step-title{font-family:var(--font-display);font-size:1.1rem;letter-spacing:.05em;margin-bottom:.5rem;}
-        .how-section .step-desc{font-size:.85rem;color:var(--muted);line-height:1.6;}
-
-        /* STATS BAR */
-        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-        .stat{background:var(--black);padding:2rem;text-align:center;}
-        .stat-num{font-family:var(--font-display);font-size:3rem;color:var(--teal);}
-        .stat-lbl{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:.5rem;}
+        /* STEPS */
+        .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.4rem}
+        .step{position:relative;padding:1.7rem;border-radius:var(--radius);border:1px dashed var(--border2);background:rgba(15,23,42,.5);transition:.35s}
+        .step:hover{background:var(--surface2);border-color:rgba(34,211,238,.45);transform:translateY(-5px)}
+        .step-num{font-family:var(--font-display);font-weight:700;font-size:2.6rem;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .step h4{font-family:var(--font-display);font-size:1.05rem;margin:.8rem 0 .45rem}
+        .step p{color:var(--muted);font-size:.86rem;line-height:1.6}
+/* STATS BAND */
+        .stats-band{max-width:1200px;margin:0 auto;padding:1rem 1.5rem 0}
+        .stats-inner{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:22px;overflow:hidden}
+        .sband{background:var(--surface);padding:2.2rem 1.5rem;text-align:center;transition:.3s}
+        .sband:hover{background:var(--surface2)}
+        .sband .n{font-family:var(--font-display);font-weight:700;font-size:2.6rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .sband .l{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:.4rem}
 
         /* CTA */
-        .cta{background:var(--dark);border-top:1px solid var(--border);padding:5rem 3rem;text-align:center;}
-        .cta h2{font-family:var(--font-display);font-size:3rem;letter-spacing:.03em;margin-bottom:1rem;}
-        .cta h2 span{color:var(--accent);-webkit-text-stroke:1px var(--teal);}
-        .cta p{color:var(--muted);margin-bottom:2.5rem;font-size:1rem;}
-        .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
-        .hero-btn-primary{background:var(--accent);color:#fff;padding:.85rem 2rem;border-radius:3px;text-decoration:none;font-family:var(--font-display);font-size:1.1rem;letter-spacing:.1em;transition:opacity .2s;}
-        .hero-btn-primary:hover{opacity:.85;}
+        .cta{max-width:1200px;margin:0 auto;padding:6rem 1.5rem}
+        .cta-inner{position:relative;text-align:center;background:linear-gradient(150deg,rgba(99,102,241,.16),rgba(34,211,238,.10) 55%,rgba(139,92,246,.14));border:1px solid var(--border2);border-radius:30px;padding:4.5rem 1.5rem;overflow:hidden}
+        .cta-inner::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 200px at 50% -40%,rgba(99,102,241,.35),transparent 70%);pointer-events:none}
+        .cta-inner h2{font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);letter-spacing:-.01em;margin-bottom:.9rem;position:relative}
+        .cta-inner p{color:var(--muted);max-width:480px;margin:0 auto 2.2rem;line-height:1.7;position:relative}
 
         /* FOOTER */
-        footer{border-top:1px solid var(--border);padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);flex-wrap:wrap;gap:.5rem;}
-        footer b{color:var(--teal);}
+        footer{border-top:1px solid var(--border);margin-top:2rem;padding:2.2rem 1.5rem;background:var(--bg2)}
+        .footer-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+        .footer-brand{display:flex;align-items:center;gap:.6rem;font-family:var(--font-display);font-weight:700}
+        .footer-inner .copy{font-family:var(--font-mono);font-size:.72rem;color:var(--muted)}
+        .footer-links{display:flex;gap:1.4rem}
+        .footer-links a{color:var(--muted);font-size:.85rem;transition:.25s}
+        .footer-links a:hover{color:var(--cyan)}
 
-        /* REDUCED MOTION */
-        @media (prefers-reduced-motion: reduce){
-            .sensor-dot{animation:none;}
-            .marquee-inner{animation:none;}
-        }
+        /* REVEAL ANIMATIONS */
+        .reveal{opacity:0;transform:translateY(38px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+        .reveal.in{opacity:1;transform:none}
+        .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}.d5{transition-delay:.5s}
+
+        /* TEMA (botón inyectado por TemaFilter) */
+        .theme-toggle{position:fixed!important;bottom:22px!important;right:22px!important;z-index:9999!important;width:46px!important;height:46px!important;border-radius:14px!important;border:1px solid var(--border2)!important;background:rgba(15,23,42,.9)!important;color:var(--text)!important;font-size:18px!important;cursor:pointer;box-shadow:0 14px 40px -14px rgba(2,6,23,.85)!important;backdrop-filter:blur(10px);display:flex!important;align-items:center;justify-content:center;padding:0!important;transition:.3s!important}
+        .theme-toggle:hover{transform:translateY(-3px) scale(1.06)!important;border-color:rgba(99,102,241,.7)!important}
 
         /* RESPONSIVE */
-        @media (max-width:900px){
-            .hero-title{font-size:3.2rem;}
-            .hero{padding:3rem 1.5rem;}
-            nav{padding:1.25rem 1.5rem;}
-            .section,.how-section{padding:3.5rem 1.5rem;}
+        @media(max-width:920px){
+            .hero{grid-template-columns:1fr;padding-top:7.5rem;text-align:center;gap:4rem}
+            .hero-sub{margin-inline:auto}
+            .hero-ctas,.hero-stats{justify-content:center}
+            .hstat+.hstat{padding-left:1.4rem}
+            .hero-visual{margin:0 auto;max-width:520px}
+            .fc-1{left:0}.fc-3{right:0}
+            .nav-links{position:fixed;top:0;left:0;right:0;background:rgba(7,11,20,.97);backdrop-filter:blur(20px);flex-direction:column;padding:6.5rem 1.5rem 2.5rem;align-items:stretch;gap:.4rem;transform:translateY(-100%);transition:.45s cubic-bezier(.16,1,.3,1);border-bottom:1px solid var(--border)}
+            .nav-links.open{transform:none}
+            .nav-link{font-size:1.05rem;padding:.9rem 1rem}
+            .nav-cta{flex-direction:column;gap:.6rem;margin-top:1rem}
+            .burger{display:flex}
+            .section{padding:4rem 1.25rem}
         }
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
     </style>
 </head>
 <body>
 
-    <!-- NAV -->
-    <nav>
-        <a href="/" class="nav-logo">Auto<b>Sen</b></a>
-        <div class="nav-links">
-            <a th:href="@{/login}" class="btn-outline">Iniciar Sesión</a>
-            <a th:href="@{/register}" class="btn-filled">Registrarse</a>
-            <a th:href="@{/nosotros}" class="btn-outline">Nosotros</a>
+    <!-- NAVBAR -->
+    <header class="nav" id="navbar">
+        <div class="nav-inner">
+            <a th:href="@{/}" class="brand">
+                <span class="logo-orb">ST</span>
+                <span>Auto<b>Sen</b></span>
+            </a>
+            <div class="nav-links" id="navMenu">
+                <a th:href="@{/}" class="nav-link active">Inicio</a>
+                <a th:href="@{/nosotros}" class="nav-link">Nosotros</a>
+                <div class="nav-cta">
+                    <a th:href="@{/login}" class="btn btn-ghost btn-sm">Iniciar sesión</a>
+                    <a th:href="@{/register}" class="btn btn-primary btn-sm">Registrarse</a>
+                </div>
+            </div>
+            <button class="burger" id="burger" aria-label="Menú">
+                <span></span><span></span><span></span>
+            </button>
         </div>
-    </nav>
+    </header>
 
     <!-- HERO -->
     <section class="hero">
-        <div class="hero-content">
-            <p class="hero-eyebrow">Sistema de Diagnóstico Vehicular</p>
-            <h1 class="hero-title">
-                PROTEGE<br>
-                <span class="line-accent">TU</span><br>
-                <span class="line-outline">VEHÍCULO</span>
+        <div class="grid-overlay"></div>
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+
+        <div class="hero-content reveal in">
+            <span class="hero-tag"><i class="pulse-dot"></i> Sistema de Diagnóstico Vehicular</span>
+            <h1>
+                Protege<br>
+                <span class="grad-text">tu</span><br>
+                <span class="grad-text-warm">vehículo</span><br>
+                en tiempo real
             </h1>
-            <p class="hero-desc">
-                Monitoreo inteligente de sensores automotrices en tiempo real.
-                Detecta fallas antes de que ocurran y mantén tu vehículo
-                siempre en óptimas condiciones.
+            <p class="hero-sub">
+                Monitoreo inteligente de sensores automotrices con alertas predictivas.
+                Detecta fallas antes de que ocurran y mantén tu vehículo siempre
+                en óptimas condiciones, desde cualquier dispositivo.
             </p>
             <div class="hero-ctas">
-                <a th:href="@{/register}" class="btn-primary">Comenzar ahora</a>
+                <a th:href="@{/register}" class="btn btn-primary">
+                    Comenzar gratis
+                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+                <a th:href="@{/nosotros}" class="btn btn-ghost">Conócenos</a>
             </div>
             <div class="hero-stats">
-                <div>
-                    <div class="stat-num">98<span>%</span></div>
-                    <div class="stat-label">Precisión</div>
+                <div class="hstat reveal in d1">
+                    <div class="num"><span class="contar" data-target="98">0</span><em>%</em></div>
+                    <span class="lbl">Precisión</span>
                 </div>
-                <div>
-                    <div class="stat-num">24<span>h</span></div>
-                    <div class="stat-label">Monitoreo</div>
+                <div class="hstat reveal in d2">
+                    <div class="num"><span class="contar" data-target="24">0</span><em>h</em></div>
+                    <span class="lbl">Monitoreo continuo</span>
                 </div>
-                <div>
-                    <div class="stat-num">+50<span>K</span></div>
-                    <div class="stat-label">Vehículos</div>
+                <div class="hstat reveal in d3">
+                    <div class="num">+<span class="contar" data-target="50">0</span><em>K</em></div>
+                    <span class="lbl">Vehículos</span>
                 </div>
             </div>
         </div>
 
-        <!-- HERO VISUAL — Car diagram with sensor dots -->
-        <div class="hero-visual">
-            <div class="car-diagram">
-                <svg class="car-body" viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="240" cy="260" rx="210" ry="18" fill="rgba(3,8,83,0.07)"/>
-                    <!-- Car body -->
-                    <path d="M 60 200 L 60 155 Q 65 130 100 115 L 160 90 Q 185 65 240 62 Q 295 65 320 90 L 380 115 Q 415 130 420 155 L 420 200 Z"
-                          fill="#16161e" stroke="#2a2a38" stroke-width="1.5"/>
-                    <!-- Roof -->
-                    <path d="M 140 115 Q 160 72 240 68 Q 320 72 340 115 Z"
-                          fill="#1e1e28" stroke="#2a2a38" stroke-width="1"/>
-                    <!-- Windows -->
-                    <path d="M 155 112 L 170 78 L 233 74 L 233 112 Z" fill="#0d1b2a" stroke="#334" stroke-width="1" opacity=".8"/>
-                    <path d="M 247 74 L 310 78 L 325 112 L 247 112 Z" fill="#0d1b2a" stroke="#334" stroke-width="1" opacity=".8"/>
-                    <!-- Wheels -->
-                    <circle cx="130" cy="208" r="40" fill="#0a0a0c" stroke="#2a2a38" stroke-width="2"/>
-                    <circle cx="130" cy="208" r="26" fill="#111116" stroke="#333" stroke-width="1.5"/>
-                    <circle cx="130" cy="208" r="10" fill="#1e1e28" stroke="#444" stroke-width="1"/>
-                    <circle cx="350" cy="208" r="40" fill="#0a0a0c" stroke="#2a2a38" stroke-width="2"/>
-                    <circle cx="350" cy="208" r="26" fill="#111116" stroke="#333" stroke-width="1.5"/>
-                    <circle cx="350" cy="208" r="10" fill="#1e1e28" stroke="#444" stroke-width="1"/>
-                    <!-- Headlight -->
-                    <ellipse cx="66" cy="163" rx="10" ry="7" fill="rgba(244,162,97,.6)" filter="url(#glow)"/>
-                    <!-- Taillight -->
-                    <ellipse cx="415" cy="163" rx="10" ry="7" fill="rgba(3,8,83,0.7)"/>
-                    <!-- Underline -->
-                    <line x1="60" y1="200" x2="420" y2="200" stroke="#2a2a38" stroke-width="1.5"/>
-                    <!-- Sensor lines -->
-                    <line x1="130" y1="168" x2="130" y2="155" stroke="rgba(3,8,83,0.4)" stroke-width="1" stroke-dasharray="3,3"/>
-                    <line x1="240" y1="155" x2="240" y2="62" stroke="rgba(244,162,97,.3)" stroke-width="1" stroke-dasharray="3,3"/>
-                    <line x1="350" y1="168" x2="350" y2="155" stroke="rgba(46,196,182,.4)" stroke-width="1" stroke-dasharray="3,3"/>
-                    <defs>
-                        <filter id="glow"><feGaussianBlur stdDeviation="3" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                    </defs>
-                </svg>
-
-                <!-- Sensor dots (positioned over SVG) -->
-                <div class="sensor-dot" style="top:52%; left:24%;" title="Motor"></div>
-                <div class="sensor-dot" style="top:35%; left:49%;" title="Transmisión"></div>
-                <div class="sensor-dot" style="top:52%; left:68%;" title="Frenos"></div>
-                <div class="sensor-dot" style="top:63%; left:12%;" title="Rueda D"></div>
-                <div class="sensor-dot" style="top:63%; left:69%;" title="Rueda T"></div>
-
-                <!-- HUD Card bottom-left -->
-                <div class="hud-card">
-                    <div class="hud-title">Temperatura Motor</div>
-                    <div class="hud-value">87°C</div>
-                    <div class="hud-sub">Normal · Actualizado ahora</div>
+        <!-- PANEL DE TELEMETRÍA -->
+        <div class="hero-visual reveal in d2">
+            <div class="panel-card">
+                <div class="panel-top">
+                    <span class="panel-title">Diagnóstico en vivo</span>
+                    <span class="live"><i></i> EN LÍNEA</span>
                 </div>
-
-                <!-- HUD Card top-right -->
-                <div class="hud-card2">
-                    <div class="status-row"><span class="status-dot ok"></span><span class="status-text">Motor — OK</span></div>
-                    <div class="status-row"><span class="status-dot warn"></span><span class="status-text">Frenos — Revisar</span></div>
-                    <div class="status-row"><span class="status-dot err"></span><span class="status-text">Sensor O2 — Falla</span></div>
+                <div class="metric">
+                    <div class="metric-head"><span class="m-name">Temperatura motor</span><span class="m-val" style="color:#22d3ee">87°C</span></div>
+                    <div class="mtrack"><div class="mfill" style="width:38%;background:linear-gradient(90deg,#6366f1,#22d3ee)"></div></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-head"><span class="m-name">Presión de aceite</span><span class="m-val" style="color:#34d399">42 psi</span></div>
+                    <div class="mtrack"><div class="mfill" style="width:55%;background:linear-gradient(90deg,#22d3ee,#34d399);animation-delay:.3s"></div></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-head"><span class="m-name">Nivel de desgaste</span><span class="m-val" style="color:#fbbf24">64%</span></div>
+                    <div class="mtrack"><div class="mfill" style="width:64%;background:linear-gradient(90deg,#f59e0b,#fbbf24);animation-delay:.6s"></div></div>
+                </div>
+                <div class="radar">
+                    <div class="gauge">
+                        <b>92<small>/ 100 · estado general</small></b>
+                    </div>
                 </div>
             </div>
+            <div class="float-chip fc-1"><i></i>Motor — OK</div>
+            <div class="float-chip fc-2"><i></i>Sensor O2 — Falla</div>
+            <div class="float-chip fc-3"><i></i>Frenos — Revisar</div>
         </div>
     </section>
 
     <!-- MARQUEE -->
-    <div class="marquee-bar">
-        <div class="marquee-inner">
-            <span class="marquee-item">Diagnóstico en Tiempo Real</span>
-            <span class="marquee-item">Alertas Predictivas</span>
-            <span class="marquee-item">Historial de Sensores</span>
-            <span class="marquee-item">Monitoreo 24/7</span>
-            <span class="marquee-item">Reportes Detallados</span>
-            <span class="marquee-item">Múltiples Vehículos</span>
-            <!-- Duplicado para que el scroll continuo (translateX -50%) no deje huecos -->
-            <span class="marquee-item">Diagnóstico en Tiempo Real</span>
-            <span class="marquee-item">Alertas Predictivas</span>
-            <span class="marquee-item">Historial de Sensores</span>
-            <span class="marquee-item">Monitoreo 24/7</span>
-            <span class="marquee-item">Reportes Detallados</span>
-            <span class="marquee-item">Múltiples Vehículos</span>
+    <div class="marquee">
+        <div class="mq-track">
+            <span>Diagnóstico en Tiempo Real</span><span>Alertas Predictivas</span><span>Historial de Sensores</span><span>Monitoreo 24/7</span><span>Reportes Detallados</span><span>Múltiples Vehículos</span>
+            <span>Diagnóstico en Tiempo Real</span><span>Alertas Predictivas</span><span>Historial de Sensores</span><span>Monitoreo 24/7</span><span>Reportes Detallados</span><span>Múltiples Vehículos</span>
         </div>
     </div>
-
-    <!-- SERVICES -->
-    <section class="section" id="servicios">
-        <div class="section-header">
-            <div class="section-tag">Lo que ofrecemos</div>
-            <h2 class="section-title">NUESTROS<br>SERVICIOS</h2>
+<!-- SERVICIOS -->
+    <section class="section reveal" id="servicios">
+        <div class="sec-head reveal">
+            <span class="sec-tag">Lo que ofrecemos</span>
+            <h2 class="sec-title">Todo para cuidar tu <span class="grad-text">vehículo</span></h2>
+            <p class="sec-desc">Una plataforma completa de monitoreo y diagnóstico que convierte los datos de tus sensores en decisiones claras.</p>
         </div>
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-num">01</div>
-                <div class="service-icon">🔍</div>
-                <h3 class="service-title">Diagnóstico Predictivo</h3>
-                <p class="service-desc">Algoritmos de análisis que detectan patrones de desgaste antes de que se conviertan en fallas críticas.</p>
+        <div class="grid-3">
+            <div class="card reveal d1">
+                <div class="card-glow"></div>
+                <span class="num-tag">01</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                <h3>Diagnóstico Predictivo</h3>
+                <p>Algoritmos de análisis que detectan patrones de desgaste antes de que se conviertan en fallas críticas.</p>
             </div>
-            <div class="service-card">
-                <div class="service-num">02</div>
-                <div class="service-icon">📡</div>
-                <h3 class="service-title">Sensores en Tiempo Real</h3>
-                <p class="service-desc">Lectura continua de parámetros vehiculares: temperatura, presión, voltaje, gases y más.</p>
+            <div class="card reveal d2">
+                <div class="card-glow"></div>
+                <span class="num-tag">02</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg></div>
+                <h3>Sensores en Tiempo Real</h3>
+                <p>Lectura continua de parámetros vehiculares: temperatura, presión, voltaje, gases y más.</p>
             </div>
-            <div class="service-card">
-                <div class="service-num">03</div>
-                <div class="service-icon">🚨</div>
-                <h3 class="service-title">Alertas Inteligentes</h3>
-                <p class="service-desc">Notificaciones inmediatas al detectar anomalías, clasificadas por severidad y tipo de sensor afectado.</p>
+            <div class="card reveal d3">
+                <div class="card-glow"></div>
+                <span class="num-tag">03</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+                <h3>Alertas Inteligentes</h3>
+                <p>Notificaciones inmediatas al detectar anomalías, clasificadas por severidad y tipo de sensor afectado.</p>
             </div>
-            <div class="service-card">
-                <div class="service-num">04</div>
-                <div class="service-icon">📊</div>
-                <h3 class="service-title">Reportes Detallados</h3>
-                <p class="service-desc">Historial completo de cada vehículo y sensor, con visualizaciones para técnicos y propietarios.</p>
+            <div class="card reveal d1">
+                <div class="card-glow"></div>
+                <span class="num-tag">04</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg></div>
+                <h3>Reportes Detallados</h3>
+                <p>Historial completo de cada vehículo y sensor, con visualizaciones para técnicos y propietarios.</p>
             </div>
-            <div class="service-card">
-                <div class="service-num">05</div>
-                <div class="service-icon">🚗</div>
-                <h3 class="service-title">Multi-Vehículo</h3>
-                <p class="service-desc">Administra flotas completas desde una sola cuenta. Filtra por placa, marca, modelo y tipo.</p>
+            <div class="card reveal d2">
+                <div class="card-glow"></div>
+                <span class="num-tag">05</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-8v-2H6a3 3 0 0 1-3-3v-3z"/><circle cx="7.5" cy="14.5" r=".5"/><circle cx="16.5" cy="14.5" r=".5"/></svg></div>
+                <h3>Multi-Vehículo</h3>
+                <p>Administra flotas completas desde una sola cuenta. Filtra por placa, marca, modelo y tipo.</p>
             </div>
-            <div class="service-card">
-                <div class="service-num">06</div>
-                <div class="service-icon">🛡️</div>
-                <h3 class="service-title">Panel de Administración</h3>
-                <p class="service-desc">Gestión centralizada de usuarios, vehículos y sensores con roles y permisos diferenciados.</p>
+            <div class="card reveal d3">
+                <div class="card-glow"></div>
+                <span class="num-tag">06</span>
+                <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+                <h3>Panel de Administración</h3>
+                <p>Gestión centralizada de usuarios, vehículos y sensores con roles y permisos diferenciados.</p>
             </div>
         </div>
     </section>
 
-    <!-- HOW IT WORKS -->
-    <section class="how-section" id="como-funciona">
-        <div class="section-header">
-            <div class="section-tag">Proceso</div>
-            <h2 class="section-title">¿CÓMO<br>FUNCIONA?</h2>
+    <!-- CÓMO FUNCIONA -->
+    <section class="section reveal" id="como-funciona">
+        <div class="sec-head reveal">
+            <span class="sec-tag">Proceso</span>
+            <h2 class="sec-title">Empieza en <span class="grad-text-green">4 pasos</span></h2>
+            <p class="sec-desc">De cero a monitoreo completo en menos tiempo del que imaginas.</p>
         </div>
         <div class="steps">
-            <div class="step">
+            <div class="step reveal d1">
                 <div class="step-num">01</div>
-                <h3 class="step-title">Registra tu vehículo</h3>
-                <p class="step-desc">Ingresa los datos de tu carro: marca, modelo, placa y tipo. El sistema lo identifica de manera única.</p>
+                <h4>Registra tu vehículo</h4>
+                <p>Ingresa los datos de tu carro: marca, modelo, placa y tipo. El sistema lo identifica de manera única.</p>
             </div>
-            <div class="step">
+            <div class="step reveal d2">
                 <div class="step-num">02</div>
-                <h3 class="step-title">Vincula los sensores</h3>
-                <p class="step-desc">Se generan automáticamente 4 sensores principales asociados a tu vehículo.</p>
+                <h4>Vincula los sensores</h4>
+                <p>Se generan automáticamente 4 sensores principales asociados a tu vehículo.</p>
             </div>
-            <div class="step">
+            <div class="step reveal d3">
                 <div class="step-num">03</div>
-                <h3 class="step-title">Monitoreo continuo</h3>
-                <p class="step-desc">El sistema analiza los datos 24/7 y clasifica el estado de cada sensor automáticamente.</p>
+                <h4>Monitoreo continuo</h4>
+                <p>El sistema analiza los datos 24/7 y clasifica el estado de cada sensor automáticamente.</p>
             </div>
-            <div class="step">
+            <div class="step reveal d4">
                 <div class="step-num">04</div>
-                <h3 class="step-title">Recibe alertas</h3>
-                <p class="step-desc">Si se detecta una anomalía, sabrás exactamente qué tipo de daño revisar y en qué sensor.</p>
+                <h4>Recibe alertas</h4>
+                <p>Si se detecta una anomalía, sabrás exactamente qué tipo de daño revisar y en qué sensor.</p>
             </div>
         </div>
     </section>
-
-    <!-- STATS -->
-    <div class="stats">
-        <div class="stat">
-            <div class="stat-num">4</div>
-            <div class="stat-lbl">Sensores por vehículo</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num">3</div>
-            <div class="stat-lbl">Niveles de alerta</div>
-        </div>
-        <div class="stat">
-            <div class="stat-num">24/7</div>
-            <div class="stat-lbl">Monitoreo continuo</div>
+<!-- STATS -->
+    <div class="stats-band reveal">
+        <div class="stats-inner">
+            <div class="sband">
+                <div class="n"><span class="contar" data-target="4">0</span></div>
+                <div class="l">Sensores por vehículo</div>
+            </div>
+            <div class="sband">
+                <div class="n"><span class="contar" data-target="3">0</span></div>
+                <div class="l">Niveles de alerta</div>
+            </div>
+            <div class="sband">
+                <div class="n"><span class="contar" data-target="24">0</span>/7</div>
+                <div class="l">Monitoreo continuo</div>
+            </div>
         </div>
     </div>
 
     <!-- CTA -->
-    <section class="cta">
-        <h2>EMPIEZA A <span>MONITOREAR</span></h2>
-        <p>Crea tu cuenta gratis y conecta tu primer vehículo en menos de 2 minutos.</p>
-        <div class="hero-btns">
-            <a th:href="@{/register}" class="hero-btn-primary">CREAR CUENTA GRATIS</a>
+    <section class="cta reveal">
+        <div class="cta-inner">
+            <h2>Empieza a <span class="grad-text">monitorear</span> hoy</h2>
+            <p>Crea tu cuenta gratis y conecta tu primer vehículo en menos de 2 minutos.</p>
+            <a th:href="@{/register}" class="btn btn-primary">
+                Crear cuenta gratis
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
         </div>
     </section>
 
     <!-- FOOTER -->
     <footer>
-        <span>Auto <b>Sen</b> // Sistema de Monitoreo Vehicular</span>
-        <span style="font-family:var(--font-mono);font-size:.65rem;">Spring Boot + Java</span>
+        <div class="footer-inner">
+            <span class="footer-brand">
+                <span class="logo-orb" style="width:32px;height:32px;font-size:.62rem">ST</span>
+                Auto<b>Sen</b> · Sistema de Monitoreo Vehicular
+            </span>
+            <nav class="footer-links">
+                <a th:href="@{/}">Inicio</a>
+                <a th:href="@{/nosotros}">Nosotros</a>
+                <a th:href="@{/login}">Ingresar</a>
+                <a th:href="@{/register}">Registro</a>
+            </nav>
+            <span class="copy">Spring Boot + Java · Thymeleaf</span>
+        </div>
     </footer>
 
+    <script>
+        (function () {
+            /* Navbar con scroll */
+            const nav = document.getElementById('navbar');
+            const burger = document.getElementById('burger');
+            const menu = document.getElementById('navMenu');
+            burger.addEventListener('click', function () {
+                burger.classList.toggle('open');
+                menu.classList.toggle('open');
+            });
+            menu.querySelectorAll('a').forEach(function (a) {
+                a.addEventListener('click', function () {
+                    burger.classList.remove('open');
+                    menu.classList.remove('open');
+                });
+            });
+            const onScroll = function () { nav.classList.toggle('scrolled', window.scrollY > 40); };
+            window.addEventListener('scroll', onScroll); onScroll();
+
+            /* Animaciones de aparición al hacer scroll */
+            const io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+                });
+            }, { threshold: 0.12 });
+            document.querySelectorAll('.reveal:not(.in)').forEach(function (el) { io.observe(el); });
+
+            /* Contadores animados */
+            const cio = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    const el = e.target, target = +el.dataset.target, dur = 1400, t0 = performance.now();
+                    const tick = function (t) {
+                        const p = Math.min(1, (t - t0) / dur);
+                        el.textContent = Math.floor(target * (1 - Math.pow(1 - p, 3)));
+                        if (p < 1) requestAnimationFrame(tick);
+                    };
+                    requestAnimationFrame(tick);
+                    cio.unobserve(el);
+                });
+            }, { threshold: 0.5 });
+            document.querySelectorAll('.contar').forEach(function (el) { cio.observe(el); });
+        })();
+    </script>
 </body>
 </html>
