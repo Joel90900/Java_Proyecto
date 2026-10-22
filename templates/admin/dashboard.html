@@ -126,7 +126,7 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
   <a href="{% url 'admin_index' %}" class="brand"><span class="logo-orb">AS</span><span>Auto<b>Sen</b></span></a>
   <nav class="pill-nav">
     <a href="{% url 'admin_index' %}" class="pill active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel Admin</a>
-    <a href="/admin/reportes" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Reportes</a>
+    <a href="{% url 'admin_reportes' %}" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Reportes</a>
   </nav>
   <div class="nav-user">
     <div class="avatar">{{ admin_correo|upper|slice:":1" }}</div>
@@ -152,7 +152,7 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
   </div>
   <div class="top-actions">
     <a href="{% url 'admin_cliente_nuevo' %}" class="btn-mini primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Nuevo cliente</a>
-    <a href="/admin/reportes" class="btn-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Ver reportes</a>
+    <a href="{% url 'admin_reportes' %}" class="btn-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Ver reportes</a>
   </div>
 </div>
 
