@@ -53,6 +53,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "core.context_processors.admin_correo",
             ],
         },
     },

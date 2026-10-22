@@ -49,3 +49,20 @@ def crear_lectura(id_vehiculo, nivel=0, valor=1.0, fecha=None, **campos) -> Lect
 def crear_alerta(id_vehiculo, nivel=50, fecha=None, **campos) -> Alerta:
     datos = {"nombre_sensor": "S", "tipo_sensor": "T", "tipo": "advertencia", "mensaje": "m", "valor": 1.0, **campos}
     return Alerta.objects.create(id_vehiculo=id_vehiculo, nivel=nivel, fecha_alerta=fecha or ahora(), **datos)
+
+
+def _post_con_csrf(client, url, datos):
+    """Hace GET para obtener la cookie csrftoken y envía el token: funciona con enforce_csrf_checks=True."""
+    client.get(url)
+    token = client.cookies.get("csrftoken")
+    if token is not None:
+        datos = {**datos, "csrfmiddlewaretoken": token.value}
+    return client.post(url, datos)
+
+
+def login_cliente(client, cliente):
+    return _post_con_csrf(client, "/login", {"correo": cliente.correo, "contrasena": CLAVE})
+
+
+def login_admin(client, usuario):
+    return _post_con_csrf(client, "/admin/login", {"correo": usuario.correo, "contrasena": CLAVE})

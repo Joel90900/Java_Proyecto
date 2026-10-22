@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro — AutoSen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070b14;--surface:#0f172a;--surface2:#151e36;
+            --border:rgba(148,163,184,.14);--border2:rgba(148,163,184,.24);
+            --text:#e6edf7;--muted:#8ea3c0;
+            --indigo:#6366f1;--violet:#8b5cf6;--cyan:#22d3ee;--emerald:#34d399;--rose:#fb7185;
+            --grad:linear-gradient(135deg,#6366f1,#22d3ee);
+            --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+            --radius:20px;--shadow:0 30px 70px -28px rgba(2,6,23,.85);
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;align-items:center;-webkit-font-smoothing:antialiased}
+        a{color:inherit;text-decoration:none}
+        button{font-family:inherit}
+        ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e293b;border-radius:20px}
+        body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 420px at 92% -8%,rgba(139,92,246,.14),transparent 60%),radial-gradient(820px 420px at -8% 22%,rgba(34,211,238,.10),transparent 55%);pointer-events:none;z-index:-1}
+
+        .shell{display:grid;grid-template-columns:1fr 1fr;width:min(1100px,100%);margin:0 auto;padding:1.5rem;gap:1.5rem;align-items:stretch}
+
+        /* PANEL DE MARCA */
+        .brand-panel{position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(160deg,#1b2240 0%,#0f172a 55%,#0b1120 100%);border:1px solid var(--border2);padding:3rem 2.6rem;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+        .bp-orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none;animation:bf 12s ease-in-out infinite}
+        .bp-orb:nth-child(1){width:300px;height:300px;background:radial-gradient(circle,#6366f1,transparent 65%);top:-100px;left:-80px}
+        .bp-orb:nth-child(2){width:260px;height:260px;background:radial-gradient(circle,#22d3ee,transparent 65%);bottom:-70px;right:-60px;animation-delay:-5s}
+        @keyframes bf{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(18px,-22px) scale(1.07)}}
+        .bp-top,.bp-foot,.bp-mid{position:relative;z-index:1}
+        .brand{display:flex;align-items:center;gap:.65rem;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+        .logo-orb{width:42px;height:42px;border-radius:13px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:.8rem;color:#fff;box-shadow:0 12px 28px -8px rgba(99,102,241,.7);position:relative}
+        .logo-orb::after{content:"";position:absolute;inset:0;border-radius:13px;background:inherit;filter:blur(14px);opacity:.6;z-index:-1}
+        .bp-tag{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);background:rgba(34,211,238,.09);border:1px solid rgba(34,211,238,.25);padding:.42rem 1rem;border-radius:999px;margin-bottom:1.6rem}
+        .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(34,211,238,.6);animation:ping 2s infinite}
+        @keyframes ping{0%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}70%{box-shadow:0 0 0 10px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+        .bp-headline{font-family:var(--font-display);font-weight:700;font-size:clamp(1.9rem,3vw,2.6rem);line-height:1.12;letter-spacing:-.015em;margin-bottom:1.2rem}
+        .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .bp-sub{color:var(--muted);font-size:.95rem;line-height:1.7;max-width:380px}
+        .bp-features{display:grid;gap:.85rem;margin-top:2.2rem}
+        .bp-feat{display:flex;align-items:center;gap:.8rem;font-size:.9rem;color:#c7d4e8}
+        .bp-feat .chk{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#34d399,#22d3ee);display:grid;place-items:center;color:#04121c;flex-shrink:0}
+        .bp-feat .chk svg{width:13px;height:13px;stroke-width:3}
+        .bp-quote{margin-top:2.4rem;border-left:3px solid var(--indigo);padding:.4rem 0 .4rem 1.1rem;font-size:.88rem;color:var(--muted);font-style:italic;line-height:1.6}
+        .bp-quote b{color:var(--text);font-style:normal}
+        .bp-foot{display:flex;align-items:center;gap:1.4rem;margin-top:2.5rem;font-family:var(--font-mono);font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+        .bp-foot .dot{width:5px;height:5px;border-radius:50%;background:var(--emerald)}
+/* FORMULARIO */
+        .form-panel{display:grid;place-items:center;padding:1rem}
+        .form-wrap{width:100%;max-width:460px}
+        .f-tag{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo);margin-bottom:.9rem}
+        .form-wrap h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,3vw,2.4rem);letter-spacing:-.01em}
+        .form-wrap .f-sub{color:var(--muted);font-size:.95rem;margin:.6rem 0 2rem;line-height:1.6}
+        .form-wrap .f-sub a{color:var(--cyan);font-weight:600}
+        .form-wrap .f-sub a:hover{text-decoration:underline}
+
+        .field{position:relative;margin-bottom:1.5rem}
+        .field .f-icon{position:absolute;left:1.05rem;top:50%;transform:translateY(-50%);color:var(--muted);transition:.25s;pointer-events:none;z-index:1;display:grid;place-items:center}
+        .field .f-icon svg{width:19px;height:19px;display:block}
+        .field input{width:100%;background:rgba(148,163,184,.05);border:1px solid var(--border2);border-radius:15px;padding:1.15rem 1rem 1.05rem 3.15rem;color:var(--text);font-size:.95rem;font-family:var(--font-body);outline:none;transition:border-color .25s,box-shadow .25s,background .25s}
+        .field label{position:absolute;left:3.2rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.94rem;pointer-events:none;transition:all .25s cubic-bezier(.16,1,.3,1);background:transparent;border-radius:8px;white-space:nowrap}
+        .field input:focus{border-color:var(--indigo);background:rgba(99,102,241,.06);box-shadow:0 0 0 4px rgba(99,102,241,.14)}
+        .field input:focus ~ .f-icon{color:var(--cyan)}
+        .field input:focus + label,
+        .field input:not(:placeholder-shown) + label{top:-1px;transform:translateY(-50%);font-size:.7rem;font-family:var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--cyan);background:var(--bg);border:1px solid rgba(34,211,238,.22);padding:.18rem .55rem}
+        .field::after{content:"";position:absolute;left:3.4rem;right:1rem;bottom:.35rem;height:2px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.16,1,.3,1);border-radius:2px}
+        .field:focus-within::after{transform:scaleX(1)}
+
+        .error-box{display:flex;align-items:center;gap:.6rem;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fda4af;border-radius:14px;padding:.85rem 1rem;font-size:.86rem;margin-bottom:1.6rem;font-weight:500}
+        .error-box svg{width:18px;height:18px;flex-shrink:0}
+
+        .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.55rem;padding:1rem 1.6rem;border-radius:999px;font-weight:600;font-size:.95rem;font-family:var(--font-body);cursor:pointer;border:0;text-decoration:none;overflow:hidden;transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s;white-space:nowrap}
+        .btn-primary{background:var(--grad);color:#fff;box-shadow:0 12px 32px -10px rgba(99,102,241,.55)}
+        .btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 46px -12px rgba(99,102,241,.78)}
+        .btn-primary::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .6s}
+        .btn-primary:hover::after{left:130%}
+        .btn-block{width:100%}
+        .btn:active{transform:scale(.98)}
+
+        .switch-line{text-align:center;margin-top:1.5rem;color:var(--muted);font-size:.9rem}
+        .switch-line a{color:var(--cyan);font-weight:600;transition:.2s}
+        .switch-line a:hover{text-decoration:underline;color:var(--emerald)}
+        .back-link{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:1.1rem;font-family:var(--font-mono);font-size:.72rem;color:var(--muted);transition:.25s}
+        .back-link:hover{color:var(--cyan)}
+        .back-link svg{width:14px;height:14px}
+
+        /* REVEAL + TEMA + RESPONSIVE */
+        .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+        .reveal.in{opacity:1;transform:none}
+        .theme-toggle{position:fixed!important;bottom:22px!important;right:22px!important;z-index:9999!important;width:46px!important;height:46px!important;border-radius:14px!important;border:1px solid var(--border2)!important;background:rgba(15,23,42,.9)!important;color:var(--text)!important;font-size:18px!important;cursor:pointer;box-shadow:0 14px 40px -14px rgba(2,6,23,.85)!important;backdrop-filter:blur(10px);display:flex!important;align-items:center;justify-content:center;padding:0!important;transition:.3s!important}
+        .theme-toggle:hover{transform:translateY(-3px) scale(1.06)!important;border-color:rgba(99,102,241,.7)!important}
+        @media(max-width:860px){
+            .shell{grid-template-columns:1fr;padding:1rem}
+            .brand-panel{padding:2.2rem 1.6rem}
+            .bp-features{grid-template-columns:1fr 1fr;gap:.7rem}
+            .bp-quote{display:none}
+            body{align-items:flex-start;padding-top:1rem}
+        }
+        @media(max-width:480px){
+            .bp-features{grid-template-columns:1fr}
+            .brand-panel{padding:1.8rem 1.3rem}
+        }
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- PANEL DE MARCA -->
+    <section class="brand-panel reveal in">
+        <span class="bp-orb"></span><span class="bp-orb"></span>
+        <div class="bp-top">
+            <a href="{% url 'inicio' %}" class="brand">
+                <span class="logo-orb">ST</span>
+                <span>Auto<b>Sen</b></span>
+            </a>
+            <span class="bp-tag" style="margin-top:1.6rem"><i class="pulse-dot"></i> Monitoreo vehicular inteligente</span>
+            <h2 class="bp-headline">Monitoriza, <span class="grad-text">anticipa</span> y conduce tranquilo.</h2>
+            <p class="bp-sub">Conecta sensores a tu vehículo, recibe alertas predictivas y asegura el rendimiento en todo momento.</p>
+        </div>
+        <div class="bp-mid">
+            <div class="bp-features">
+                <div class="bp-feat"><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> 4 sensores generados automáticamente</div>
+                <div class="bp-feat"><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Alertas en tiempo real</div>
+                <div class="bp-feat"><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Monitoreo 24/7</div>
+                <div class="bp-feat"><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span> Multi-vehículo</div>
+            </div>
+            <blockquote class="bp-quote">
+                "Cada dato de sensor se convierte en una alerta oportuna,
+                antes de que la falla se convierta en un problema mayor."
+                <b> — Equipo AutoSen</b>
+            </blockquote>
+        </div>
+        <div class="bp-foot">
+            <span><span class="dot"></span> Diagnóstico predictivo</span>
+            <span><span class="dot"></span> Reportes claros</span>
+            <span><span class="dot"></span> Seguridad</span>
+        </div>
+    </section>
+
+    <!-- FORMULARIO -->
+    <main class="form-panel">
+        <div class="form-wrap reveal in d1">
+            <div class="f-tag">// Nueva cuenta</div>
+            <h1>Crear <span class="grad-text">cuenta</span></h1>
+            <p class="f-sub">Completa tus datos y empieza a monitorear tu vehículo. ¿Ya tienes una? <a href="{% url 'login' %}">Inicia sesión</a></p>
+
+            {% if error %}<div class="error-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span>{{ error }}</span>
+            </div>{% endif %}
+
+            <form method="post" action="{% url 'register' %}">{% csrf_token %}
+                <div class="field">
+                    <span class="f-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                    <input type="text" name="nombre" placeholder=" " required>
+                    <label>Nombre</label>
+                </div>
+                <div class="field">
+                    <span class="f-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                    <input type="text" name="apellido" placeholder=" " required>
+                    <label>Apellido</label>
+                </div>
+<div class="field">
+                    <span class="f-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg></span>
+                    <input type="email" name="correo" placeholder=" " required>
+                    <label>Correo electrónico</label>
+                </div>
+                <div class="field">
+                    <span class="f-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                    <input type="password" name="contrasena" placeholder=" " required>
+                    <label>Contraseña</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    Registrarse
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+
+            <p class="switch-line">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+            <a href="{% url 'inicio' %}" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                Volver al inicio
+            </a>
+        </div>
+    </main>
+</div>
+
+<script>
+    (function () {
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.2 });
+        document.querySelectorAll('.reveal:not(.in)').forEach(function (el) { io.observe(el); });
+    })();
+</script>
+</body>
+</html>

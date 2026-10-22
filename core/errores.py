@@ -5,7 +5,9 @@ Todas usan templates/error.html con status, error (frase HTTP) y message.
 """
 from http import HTTPStatus
 
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+
+from core.auth import admin_actual, cliente_actual, ruta_publica
 
 MENSAJES = {
     404: "El recurso solicitado no fue encontrado.",
@@ -32,6 +34,14 @@ def error_403(request, exception=None):
 
 
 def error_404(request, exception=None):
+    """Como en Spring, una ruta no pública sin sesión lleva al login antes que al 404."""
+    ruta = request.path
+    if not ruta_publica(ruta):
+        if ruta == "/admin" or ruta.startswith("/admin/"):
+            if admin_actual(request) is None:
+                return redirect("/admin/login")
+        elif cliente_actual(request) is None:
+            return redirect("/login")
     return render_error(request, 404)
 
 
