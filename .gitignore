@@ -1,0 +1,13 @@
+# Entorno y configuración local
+.venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Dumps de MySQL con datos personales (no se versionan)
+datos/
+
+# Estáticos recolectados
+staticfiles/

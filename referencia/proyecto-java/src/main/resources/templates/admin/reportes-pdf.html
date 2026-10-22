@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Oficial de Telemetría y Sensores — AutoSen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', Arial, sans-serif;
+            color: #1a1a1e;
+            background-color: #f8f9fa;
+            padding: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 45px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .header-doc {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0f203d;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .brand-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f203d;
+            letter-spacing: -0.5px;
+        }
+        .brand-title span { color: #2ec4b6; }
+        .doc-subtitle { font-size: 13px; color: #5a6069; margin-top: 4px; }
+
+        .meta-box {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #5a6069;
+        }
+        .meta-box strong { color: #0f203d; }
+
+        /* KPI Banner */
+        .kpi-banner {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background-color: #f0f3f7;
+            padding: 14px 16px;
+            border-radius: 6px;
+            border-left: 4px solid #0f203d;
+        }
+        .kpi-card.salud { border-left-color: #2eb878; }
+        .kpi-card.advertencia { border-left-color: #e6b84d; }
+        .kpi-card.falla { border-left-color: #e65a5a; }
+
+        .kpi-val { font-size: 24px; font-weight: 700; color: #0f203d; line-height: 1; }
+        .kpi-lbl { font-size: 10px; font-weight: 700; color: #5a6069; text-transform: uppercase; margin-top: 6px; }
+
+        /* Section & Tables */
+        h2.section-title {
+            font-size: 16px;
+            color: #0f203d;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #dcdfe4;
+            padding-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e1e4e8;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0f203d;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) { background-color: #f9fafb; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .badge-optimo { background-color: #e3f9ed; color: #1c7c4c; }
+        .badge-advertencia { background-color: #fff4db; color: #9c6c00; }
+        .badge-falla { background-color: #fde8e8; color: #c52727; }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Firmas de Auditoría */
+        .signatures {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 30px;
+        }
+
+        .sig-block {
+            width: 250px;
+            border-top: 1px solid #8c9099;
+            text-align: center;
+            padding-top: 8px;
+            font-size: 11px;
+            color: #5a6069;
+        }
+        .sig-name { font-weight: 700; color: #0f203d; font-size: 12px; margin-bottom: 2px; }
+
+        /* Botón Flotante de Impresión */
+        .no-print {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn-action {
+            background-color: #0f203d;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-action:hover { background-color: #2ec4b6; color: #0a0a0c; }
+        .btn-action.secondary { background-color: #ffffff; color: #0f203d; border: 1px solid #dcdfe4; }
+
+        @media print {
+            body { background: #ffffff; padding: 0; }
+            .document-container { box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botones de Acción Flotantes -->
+    <div class="no-print">
+        <a th:href="@{/admin/reportes}" class="btn-action secondary">&larr; Volver a Reportes</a>
+        <button onclick="window.print()" class="btn-action">🖨️ Imprimir Informe</button>
+    </div>
+
+    <div class="document-container">
+        <!-- Encabezado Institucional -->
+        <div class="header-doc">
+            <div>
+                <div class="brand-title">AUTO<span>SEN</span> &bull; TELEMETRÍA</div>
+                <div class="doc-subtitle">Informe Ejecutivo de Diagnóstico de Sensores y Estado Vehicular</div>
+            </div>
+            <div class="meta-box">
+                <div><strong>REPORTE ID:</strong> <span th:text="${reporteId}">RPT-001</span></div>
+                <div><strong>FECHA EMISIÓN:</strong> <span th:text="${#temporals.format(fechaGeneracion, 'dd/MM/yyyy HH:mm')}">10/09/2026</span></div>
+                <div><strong>AUDITOR:</strong> <span th:text="${adminNombre}">Administrador</span></div>
+            </div>
+        </div>
+
+        <!-- Resumen de KPIs para Análisis y Toma de Decisiones -->
+        <div class="kpi-banner">
+            <div class="kpi-card salud">
+                <div class="kpi-val" th:text="${saludFlota + '%'}">100%</div>
+                <div class="kpi-lbl">Salud General de Flota</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-val" th:text="${totalSensores}">0</div>
+                <div class="kpi-lbl">Sensores Auditados</div>
+            </div>
+            <div class="kpi-card advertencia">
+                <div class="kpi-val" th:text="${sensoresAdvertencia}">0</div>
+                <div class="kpi-lbl">En Advertencia Preventiva</div>
+            </div>
+            <div class="kpi-card falla">
+                <div class="kpi-val" th:text="${sensoresFalla}">0</div>
+                <div class="kpi-lbl">Fallas Críticas Detectadas</div>
+            </div>
+        </div>
+
+        <!-- Tabla de Alertas Prioritarias (si existen) -->
+        <div th:if="${!alertas.isEmpty()}">
+            <h2 class="section-title">🚨 Alertas Técnicas Prioritarias (Acción Inmediata y Preventiva)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sensor</th>
+                        <th>Tipo</th>
+                        <th>Vehículo</th>
+                        <th>Placa</th>
+                        <th>Cliente</th>
+                        <th>Nivel</th>
+                        <th>Estado</th>
+                        <th>Diagnóstico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="a : ${alertas}">
+                        <td style="font-weight:600;" th:text="${a.nombreSensor}">Sensor</td>
+                        <td class="mono" th:text="${a.tipoSensor}">Tipo</td>
+                        <td th:text="${a.vehiculo != null ? a.vehiculo.nombreVehiculo : '-'}">Vehículo</td>
+                        <td class="mono" th:text="${a.vehiculo != null ? a.vehiculo.placa : '-'}">Placa</td>
+                        <td th:text="${a.vehiculo != null && a.vehiculo.cliente != null ? (a.vehiculo.cliente.nombreCliente + ' ' + a.vehiculo.cliente.apellidoCliente) : '-'}">Cliente</td>
+                        <td class="mono" th:text="${a.nivel != null ? a.nivel + '%' : '0%'}">0%</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${(a.nivel != null && a.nivel >= 70) or 'falla'.equalsIgnoreCase(a.estado)} ? 'badge-falla' : 'badge-advertencia'"
+                                  th:text="${(a.nivel != null && a.nivel >= 70) or 'falla'.equalsIgnoreCase(a.estado)} ? 'FALLA' : 'ADVERTENCIA'">
+                            </span>
+                        </td>
+                        <td th:text="${a.tipoDano != null ? a.tipoDano : 'Revisión requerida'}">Diagnóstico</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Inventario Completo de Sensores Auditados -->
+        <h2 class="section-title">Detalle de Telemetría de Sensores</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sensor</th>
+                    <th>Tipo</th>
+                    <th>Vehículo</th>
+                    <th>Placa</th>
+                    <th>Nivel</th>
+                    <th>Estado</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${sensores.isEmpty()}">
+                    <td colspan="7" style="text-align:center;color:#6a6a7a;padding:20px;">No se registraron sensores para los criterios consultados.</td>
+                </tr>
+                <tr th:each="s : ${sensores}">
+                    <td th:text="${s.nombreSensor}">Sensor</td>
+                    <td class="mono" th:text="${s.tipoSensor}">Tipo</td>
+                    <td th:text="${s.vehiculo != null ? s.vehiculo.nombreVehiculo : '-'}">Vehículo</td>
+                    <td class="mono" th:text="${s.vehiculo != null ? s.vehiculo.placa : '-'}">Placa</td>
+                    <td class="mono" th:text="${s.nivel != null ? s.nivel + '%' : '0%'}">0%</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${(s.nivel != null && s.nivel >= 70) or 'falla'.equalsIgnoreCase(s.estado)} ? 'badge-falla' : (((s.nivel != null && s.nivel >= 40) or 'advertencia'.equalsIgnoreCase(s.estado)) ? 'badge-advertencia' : 'badge-optimo')"
+                              th:text="${(s.nivel != null && s.nivel >= 70) or 'falla'.equalsIgnoreCase(s.estado)} ? 'FALLA' : (((s.nivel != null && s.nivel >= 40) or 'advertencia'.equalsIgnoreCase(s.estado)) ? 'ADVERTENCIA' : 'ÓPTIMO')">
+                        </span>
+                    </td>
+                    <td th:text="${s.tipoDano != null ? s.tipoDano : 'Operación normal'}">Diagnóstico</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Firmas de Validación y Control de Calidad -->
+        <div class="signatures">
+            <div class="sig-block">
+                <div class="sig-name" th:text="${adminNombre}">Administrador</div>
+                <div>Auditor Técnico Responsable</div>
+                <div>AutoSen Diagnostic Systems</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-name">Control de Calidad &amp; Operaciones</div>
+                <div>Validación de Parámetros y Sensores</div>
+                <div>Certificación ISO/IEC 25010</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
