@@ -1,0 +1,323 @@
+{% load autosen %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — AutoSen</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0c;--surface:#14141c;--surface2:#1d1d28;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.18);--text:#f0eff4;--muted:#8f8fa3;--red:#e63946;--red2:#ff6b6b;--gold:#f4a261;--teal:#2ec4b6;--grad:linear-gradient(135deg,#e63946,#ff6b6b);--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:18px}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#262630;border-radius:20px}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 420px at 92% -8%,rgba(230,57,70,.14),transparent 60%),radial-gradient(820px 420px at -8% 22%,rgba(244,162,97,.06),transparent 55%);pointer-events:none;z-index:-1}
+.app-nav{position:sticky;top:0;z-index:90;display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;padding:.95rem 1.4rem;background:rgba(10,10,12,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);box-shadow:0 16px 40px -24px rgba(0,0,0,.9)}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:var(--font-display);font-weight:700;font-size:1.3rem;flex-shrink:0}
+.brand b{color:var(--red)}
+.logo-orb{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:.72rem;color:#fff;box-shadow:0 10px 26px -6px rgba(230,57,70,.55);position:relative;flex-shrink:0}
+.logo-orb::after{content:"";position:absolute;inset:0;border-radius:12px;background:inherit;filter:blur(12px);opacity:.55;z-index:-1}
+.pill-nav{display:flex;align-items:center;gap:.3rem;flex:1 1 auto;overflow-x:auto;scrollbar-width:thin}
+.pill-nav::-webkit-scrollbar{height:4px}
+.pill-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:99px}
+.pill{display:inline-flex;align-items:center;gap:.45rem;padding:.62rem 1rem;border-radius:999px;color:var(--muted);font-size:.88rem;font-weight:600;white-space:nowrap;transition:.25s}
+.pill svg{width:16px;height:16px;flex-shrink:0}
+.pill:hover{color:#fff;background:rgba(255,255,255,.06)}
+.pill.active{color:#fff;background:linear-gradient(135deg,rgba(230,57,70,.28),rgba(255,107,107,.1));border:1px solid rgba(230,57,70,.5);box-shadow:0 8px 22px -10px rgba(230,57,70,.6)}
+.pill.active svg{color:var(--red2)}
+.nav-user{display:flex;align-items:center;gap:.85rem;flex-shrink:0}
+.avatar{width:40px;height:40px;border-radius:13px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1rem;color:#fff;flex-shrink:0;box-shadow:0 8px 20px -8px rgba(230,57,70,.6)}
+.user-name{font-weight:600;font-size:.84rem;color:var(--text)}
+.user-meta{min-width:0;text-align:left}
+.user-email{font-family:var(--font-mono);font-size:.62rem;color:var(--red2);word-break:break-all}
+.logout-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.66rem 1.05rem;border-radius:12px;border:1px solid var(--border2);background:rgba(230,57,70,.06);color:var(--muted);font-size:.84rem;font-weight:600;transition:.25s}
+.logout-btn:hover{border-color:rgba(230,57,70,.55);color:#fda4af;background:rgba(230,57,70,.14)}
+.logout-btn svg{width:16px;height:16px}
+.main{padding:2.2rem 2.5rem 3rem;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.6rem;flex-wrap:wrap}
+.greeting-tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--red2);margin-bottom:.5rem}
+.page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,2.6vw,2.3rem);letter-spacing:-.01em}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.page-date{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);margin-top:.35rem}
+.top-actions{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1.1rem;margin-bottom:2.4rem}
+.stat-card{position:relative;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:1.45rem 1.5rem;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s}
+.stat-card:hover{transform:translateY(-5px);border-color:rgba(230,57,70,.5);box-shadow:0 24px 50px -24px rgba(230,57,70,.45)}
+.stat-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--tc,var(--grad))}
+.stat-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(230,57,70,.14);border:1px solid rgba(230,57,70,.35);margin-bottom:.9rem}
+.stat-icon svg{width:19px;height:19px;color:#ff8f97}
+.stat-label{font-family:var(--font-mono);font-size:.66rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.stat-value{font-family:var(--font-display);font-weight:700;font-size:2.7rem;line-height:1;margin-top:.4rem}
+.stat-foot{font-size:.76rem;color:var(--muted);margin-top:.5rem}
+.block-title{display:flex;align-items:center;gap:.6rem;font-family:var(--font-display);font-weight:700;font-size:1.35rem;letter-spacing:-.01em;margin:2.4rem 0 1.1rem}
+.block-title svg{width:21px;height:21px;color:var(--red2)}
+.block-title small{font-family:var(--font-mono);font-weight:400;font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.quick-card{display:flex;align-items:center;gap:1rem;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:1.15rem 1.25rem;transition:transform .3s,border-color .3s,box-shadow .3s}
+.quick-card:hover{transform:translateY(-4px);border-color:rgba(230,57,70,.55);box-shadow:0 22px 44px -22px rgba(230,57,70,.5)}
+.q-icon{width:42px;height:42px;border-radius:13px;background:rgba(230,57,70,.14);border:1px solid rgba(230,57,70,.35);display:grid;place-items:center;flex-shrink:0}
+.q-icon svg{width:20px;height:20px;color:#ff8f97}
+.q-name{font-weight:600;font-size:.9rem}
+.q-desc{font-family:var(--font-mono);font-size:.64rem;color:var(--muted);margin-top:.2rem}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font:700 .68rem var(--font-mono);color:var(--muted);padding:14px 18px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.08em}
+td{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.9rem;vertical-align:middle}
+tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{background:rgba(255,255,255,.025)}
+.mono{font-family:var(--font-mono)}
+.cell-name{font-weight:600}
+.cell-sub{font-family:var(--font-mono);font-size:.64rem;color:var(--muted);margin-top:.2rem}
+.vacio{color:var(--muted);font-style:italic;text-align:center;padding:2.2rem}
+.badge{display:inline-block;padding:4px 11px;border-radius:999px;font:700 .66rem var(--font-mono);letter-spacing:.06em}
+.badge.on{color:var(--teal);background:rgba(46,196,182,.12);border:1px solid rgba(46,196,182,.35)}
+.badge.off{color:var(--red2);background:rgba(230,57,70,.14);border:1px solid rgba(230,57,70,.4)}
+.badge.ok{color:var(--teal);background:rgba(46,196,182,.12);border:1px solid rgba(46,196,182,.35)}
+.badge.adv{color:var(--gold);background:rgba(244,162,97,.14);border:1px solid rgba(244,162,97,.4)}
+.badge.falla{color:var(--red2);background:rgba(230,57,70,.14);border:1px solid rgba(230,57,70,.4)}
+.actions{display:flex;gap:.45rem;align-items:center;flex-wrap:wrap}
+.actions form{display:inline}
+.btn-mini{display:inline-flex;align-items:center;gap:.35rem;padding:.42rem .8rem;border-radius:9px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text);font:600 .72rem var(--font-body);cursor:pointer;transition:.22s}
+.btn-mini svg{width:14px;height:14px}
+.btn-mini:hover{transform:translateY(-1px)}
+.btn-mini.edit:hover{border-color:rgba(46,196,182,.6);color:#7ee7cf;background:rgba(46,196,182,.1)}
+.btn-mini.toggle:hover{border-color:rgba(244,162,97,.6);color:var(--gold);background:rgba(244,162,97,.1)}
+.btn-mini.danger:hover{border-color:rgba(230,57,70,.6);color:var(--red2);background:rgba(230,57,70,.12)}
+.btn-mini.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn-mini.primary:hover{background:#c1121f;border-color:#c1121f}
+.sensor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.1rem}
+.sensor-card{position:relative;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s}
+.sensor-card:hover{transform:translateY(-5px);border-color:rgba(230,57,70,.5);box-shadow:0 24px 50px -24px rgba(230,57,70,.4)}
+.sensor-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.sensor-card.ok::before{background:linear-gradient(90deg,#2ec4b6,#4be0d0)}
+.sensor-card.adv::before{background:linear-gradient(90deg,#f4a261,#f9c74f)}
+.sensor-card.falla::before{background:linear-gradient(90deg,#e63946,#ff6b6b)}
+.sensor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;gap:.6rem}
+.sensor-tipo{font-family:var(--font-mono);font-size:.62rem;color:var(--muted);letter-spacing:.1em;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:.28rem .6rem;border-radius:8px}
+.sensor-nombre{font-size:.95rem;font-weight:600;margin-bottom:.3rem}
+.sensor-veh{font-family:var(--font-mono);font-size:.68rem;color:var(--muted);margin-bottom:1rem}
+.sensor-nivel-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
+.sensor-nivel-text{font-family:var(--font-mono);font-size:.63rem;color:var(--muted);letter-spacing:.08em}
+.sensor-nivel-value{font-family:var(--font-display);font-weight:700;font-size:1.3rem}
+.progress-bar{background:rgba(255,255,255,.1);border-radius:99px;height:8px;overflow:hidden;margin-bottom:1rem}
+.progress-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.progress-fill.ok{background:linear-gradient(90deg,#2ec4b6,#4be0d0)}
+.progress-fill.adv{background:linear-gradient(90deg,#f4a261,#f9c74f)}
+.progress-fill.falla{background:linear-gradient(90deg,#e63946,#ff6b6b)}
+.sensor-actions{display:flex;gap:.5rem}
+@media(max-width:960px){
+    .app-nav{padding:.8rem 1rem;gap:.5rem}
+    .pill-nav{order:3;width:100%;margin-top:.1rem;overflow-x:auto}
+    .pill{padding:.5rem .88rem;font-size:.82rem}
+    .user-meta{display:none}
+    .logout-btn{padding:0;width:38px;height:38px;justify-content:center;border-radius:12px}
+    .logout-btn .lg-text{display:none}
+    .main{padding:1.4rem 1.2rem 2.5rem}
+    .topbar{margin-bottom:1.2rem}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<header class="app-nav" id="appNav">
+  <a href="{% url 'admin_index' %}" class="brand"><span class="logo-orb">AS</span><span>Auto<b>Sen</b></span></a>
+  <nav class="pill-nav">
+    <a href="{% url 'admin_index' %}" class="pill active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Panel Admin</a>
+    <a href="/admin/reportes" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Reportes</a>
+  </nav>
+  <div class="nav-user">
+    <div class="avatar">{{ admin_correo|upper|slice:":1" }}</div>
+    <div class="user-meta">
+      <div class="user-name">{{ admin_correo }}</div>
+      <div class="user-email">ADMINISTRADOR</div>
+    </div>
+    <form method="post" action="{% url 'admin_logout' %}">{% csrf_token %}
+      <button type="submit" class="logout-btn" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        <span class="lg-text">Cerrar sesión</span>
+      </button>
+    </form>
+  </div>
+</header>
+
+<main class="main">
+<div class="topbar">
+  <div>
+    <div class="greeting-tag">// Panel de administración</div>
+    <h1 class="page-title">Panel de <span class="grad-text">Control</span></h1>
+    <p class="page-date">{% now "l, d F Y" %}</p>
+  </div>
+  <div class="top-actions">
+    <a href="{% url 'admin_cliente_nuevo' %}" class="btn-mini primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Nuevo cliente</a>
+    <a href="/admin/reportes" class="btn-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Ver reportes</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card" style="--tc:linear-gradient(135deg,#e63946,#ff6b6b)">
+    <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="stat-label">Clientes</div>
+    <div class="stat-value" >{{ totalClientes }}</div>
+    <div class="stat-foot">Cuentas registradas</div>
+  </div>
+  <div class="stat-card" style="--tc:linear-gradient(135deg,#ff6b6b,#f4a261)">
+    <div class="stat-icon" style="background:rgba(244,162,97,.14);border-color:rgba(244,162,97,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f4a261"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-6v-2H6a3 3 0 0 1-3-3v-3z"/></svg></div>
+    <div class="stat-label">Vehículos</div>
+    <div class="stat-value" >{{ totalVehiculos }}</div>
+    <div class="stat-foot">Monitoreados</div>
+  </div>
+  <div class="stat-card" style="--tc:linear-gradient(135deg,#f4a261,#2ec4b6)">
+    <div class="stat-icon" style="background:rgba(46,196,182,.14);border-color:rgba(46,196,182,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#2ec4b6"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg></div>
+    <div class="stat-label">Sensores</div>
+    <div class="stat-value" >{{ totalSensores }}</div>
+    <div class="stat-foot">{{ sensoresOk }} en estado óptimo</div>
+  </div>
+  <div class="stat-card" style="--tc:linear-gradient(135deg,#e63946,#c1121f)">
+    <div class="stat-icon" style="background:rgba(230,57,70,.2);border-color:rgba(230,57,70,.5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ff6b6b"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+    <div class="stat-label">En falla</div>
+    <div class="stat-value" style="color:var(--red2)" >{{ totalFallas }}</div>
+    <div class="stat-foot">{{ totalAdvertencias }} en advertencia</div>
+  </div>
+</div>
+
+<h2 class="block-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Acciones rápidas</h2>
+<div class="quick-grid">
+  <a href="{% url 'admin_cliente_nuevo' %}" class="quick-card">
+    <div class="q-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+    <div><div class="q-name">Nuevo cliente</div><div class="q-desc">Registrar cuenta de cliente</div></div>
+  </a>
+  <a href="/admin/vehiculo/nuevo" class="quick-card">
+    <div class="q-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-6v-2H6a3 3 0 0 1-3-3v-3z"/></svg></div>
+    <div><div class="q-name">Nuevo vehículo</div><div class="q-desc">Asignar vehículo a un cliente</div></div>
+  </a>
+  <a href="/admin/sensor/nuevo" class="quick-card">
+    <div class="q-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg></div>
+    <div><div class="q-name">Nuevo sensor</div><div class="q-desc">Configurar sensor en un vehículo</div></div>
+  </a>
+  <a href="{% url 'admin_usuario_nuevo' %}" class="quick-card">
+    <div class="q-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+    <div><div class="q-name">Nuevo administrador</div><div class="q-desc">Crear usuario con rol admin</div></div>
+  </a>
+</div>
+<h2 class="block-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes <small>({{ clientes|length }})</small></h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Cliente</th><th>Correo</th><th>Estado</th><th>Vehículos</th><th style="text-align:right">Acciones</th></tr></thead>
+    <tbody>
+      {% if not clientes %}<tr><td colspan="5" class="vacio">No hay clientes registrados todavía.</td></tr>{% endif %}
+      {% for c in clientes %}<tr>
+        <td>
+          <div class="cell-name">{{ c.nombre_cliente|java }} {{ c.apellido_cliente|java }}</div>
+          <div class="cell-sub">ID {{ c.id_cliente }}</div>
+        </td>
+        <td class="mono">{{ c.correo|default_if_none:"" }}</td>
+        <td><span class="badge {% if c.estado == 'activo' %}on{% else %}off{% endif %}">{% if c.estado == 'activo' %}ACTIVO{% else %}BLOQUEADO{% endif %}</span></td>
+        <td class="mono">{{ c.vehiculos.count }}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end">
+            <a href="{% url 'admin_cliente_editar' c.id_cliente %}" class="btn-mini edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Editar</a>
+            <form method="post" action="{% url 'admin_cliente_estado' c.id_cliente %}">{% csrf_token %}
+              <button class="btn-mini toggle">{% if c.estado == 'activo' %}Bloquear{% else %}Activar{% endif %}</button>
+            </form>
+            <form method="post" action="{% url 'admin_cliente_eliminar' c.id_cliente %}" onsubmit="return confirm('¿Eliminar al cliente y a todos sus vehículos?')">{% csrf_token %}
+              <button class="btn-mini danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Eliminar</button>
+            </form>
+          </div>
+        </td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h2 class="block-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-6v-2H6a3 3 0 0 1-3-3v-3z"/></svg>Vehículos <small>({{ totalVehiculos }})</small></h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Vehículo</th><th>Placa</th><th>Propietario</th><th>Sensores</th><th style="text-align:right">Acciones</th></tr></thead>
+    <tbody>
+      {% if not vehiculos %}<tr><td colspan="5" class="vacio">No hay vehículos registrados todavía.</td></tr>{% endif %}
+      {% for v in vehiculos %}<tr>
+        <td>
+          <div class="cell-name">{{ v.nombre_vehiculo }}</div>
+          <div class="cell-sub">{{ v.marca|java }}{% if v.modelo is not None %} · {{ v.modelo }}{% endif %}</div>
+        </td>
+        <td class="mono">{{ v.placa|default_if_none:"" }}</td>
+        <td>{% if v.cliente %}{{ v.cliente.nombre_cliente|java }} {{ v.cliente.apellido_cliente|java }}{% else %}Sin asignar{% endif %}</td>
+        <td class="mono">{{ v.sensores.count }}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end">
+            <a href="/admin/vehiculo/{{ v.id_vehiculo }}/editar" class="btn-mini edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Editar</a>
+            <form method="post" action="/admin/vehiculo/{{ v.id_vehiculo }}/eliminar" onsubmit="return confirm('¿Eliminar este vehículo y sus sensores?')">{% csrf_token %}
+              <button class="btn-mini danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Eliminar</button>
+            </form>
+          </div>
+        </td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<h2 class="block-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg>Sensores <small>({{ sensores|length }})</small></h2>
+<div class="sensor-grid">
+  {% if not sensores %}<div class="table-wrap"><p class="vacio">No hay sensores configurados todavía.</p></div>{% endif %}
+  {% for s in sensores %}<div class="sensor-card {{ s.nivel|estado_nivel:"falla,adv,ok" }}">
+    <div class="sensor-top">
+      <span class="sensor-tipo">{{ s.tipo_sensor }}</span>
+      <span class="badge {{ s.nivel|estado_nivel:"falla,adv,ok" }}">{{ s.nivel|estado_nivel:"FALLA,ADVERTENCIA,ÓPTIMO" }}</span>
+    </div>
+    <div class="sensor-nombre">📡 {{ s.nombre_sensor|java }}</div>
+    <div class="sensor-veh">{% if s.vehiculo %}🚗 {{ s.vehiculo.nombre_vehiculo|java }} · {{ s.vehiculo.placa|java }}{% else %}Sin vehículo{% endif %}</div>
+    <div class="sensor-nivel-label">
+      <span class="sensor-nivel-text">NIVEL DE DESGASTE</span>
+      <span class="sensor-nivel-value">{% if s.nivel is not None %}{{ s.nivel }}%{% else %}0%{% endif %}</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill {{ s.nivel|estado_nivel:"falla,adv,ok" }}" style="width:{{ s.nivel|default_if_none:0 }}%"></div></div>
+    <div class="sensor-actions">
+      <a href="/admin/sensor/{{ s.id_sensor }}/editar" class="btn-mini edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Editar</a>
+      <form method="post" action="/admin/sensor/{{ s.id_sensor }}/eliminar" onsubmit="return confirm('¿Eliminar este sensor?')">{% csrf_token %}
+        <button class="btn-mini danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Eliminar</button>
+      </form>
+    </div>
+  </div>{% endfor %}
+</div>
+
+<h2 class="block-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Administradores del sistema <small>({{ usuarios|length }})</small></h2>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th style="text-align:right">Acciones</th></tr></thead>
+    <tbody>
+      {% if not usuarios %}<tr><td colspan="4" class="vacio">No hay administradores.</td></tr>{% endif %}
+      {% for u in usuarios %}<tr>
+        <td class="cell-name">{{ u.nombre }}</td>
+        <td class="mono">{{ u.correo }}</td>
+        <td><span class="badge on">{{ u.rol|default_if_none:"" }}</span></td>
+        <td>
+          <div class="actions" style="justify-content:flex-end">
+            <a href="{% url 'admin_usuario_editar' u.id_usuario %}" class="btn-mini edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Editar</a>
+            <form method="post" action="{% url 'admin_usuario_eliminar' u.id_usuario %}" onsubmit="return confirm('¿Eliminar este administrador?')">{% csrf_token %}
+              <button class="btn-mini danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Eliminar</button>
+            </form>
+          </div>
+        </td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</main>
+</div>
+<script>
+(function () {
+    var path = location.pathname, best = null, bestLen = -1;
+    document.querySelectorAll('.pill').forEach(function (p) {
+        try {
+            var href = new URL(p.href).pathname;
+            if (href !== '/' && path.startsWith(href) && href.length > bestLen) { best = p; bestLen = href.length; }
+        } catch (e) {}
+    });
+    if (best) best.classList.add('active');
+})();
+</script>
+</body>
+</html>
