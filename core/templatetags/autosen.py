@@ -6,7 +6,21 @@ corresponde al nivel (>= 70 falla, >= 40 advertencia, si no ok; None cuenta como
 """
 from django import template
 
+from core.utilidades import double_java, texto_java
+
 register = template.Library()
+
+
+@register.filter
+def java(valor) -> str:
+    """Concatenación de Thymeleaf/SpEL: un null se escribe "null" (Django escribiría "None")."""
+    return texto_java(valor)
+
+
+@register.filter
+def multiplicar(a, b) -> str:
+    """Producto con el formato de un double de Java (p. ej. el retardo de animación iter.index * 0.08)."""
+    return double_java(float(a) * float(b))
 
 
 @register.filter

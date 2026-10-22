@@ -1,0 +1,268 @@
+{% load autosen %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensores — AutoSen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg:#070b14;--bg2:#0b1120;--surface:#0f172a;--surface2:#151e36;
+            --border:rgba(148,163,184,.14);--border2:rgba(148,163,184,.24);
+            --text:#e6edf7;--muted:#8ea3c0;
+            --indigo:#6366f1;--violet:#8b5cf6;--cyan:#22d3ee;--emerald:#34d399;--amber:#fbbf24;--rose:#fb7185;
+            --grad:linear-gradient(135deg,#6366f1,#22d3ee);
+            --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+            --radius:20px;--shadow:0 30px 70px -28px rgba(2,6,23,.85);
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;-webkit-font-smoothing:antialiased}
+        a{color:inherit;text-decoration:none}
+        button{font-family:inherit;cursor:pointer}
+        ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e293b;border-radius:20px}
+        body::before{content:"";position:fixed;inset:0;background:radial-gradient(900px 420px at 92% -8%,rgba(139,92,246,.12),transparent 60%),radial-gradient(820px 420px at -8% 22%,rgba(34,211,238,.08),transparent 55%);pointer-events:none;z-index:-1}
+
+        .layout{display:block;min-height:100vh}
+        .sidebar{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:1.7rem;padding:1.8rem 1.4rem;background:rgba(11,17,32,.72);border-right:1px solid var(--border);backdrop-filter:blur(16px)}
+        .brand{display:flex;align-items:center;gap:.65rem;font-family:var(--font-display);font-weight:700;font-size:1.32rem;padding:0 .3rem}
+        .logo-orb{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:.74rem;color:#fff;box-shadow:0 10px 26px -6px rgba(99,102,241,.6);position:relative;flex-shrink:0}
+        .logo-orb::after{content:"";position:absolute;inset:0;border-radius:12px;background:inherit;filter:blur(12px);opacity:.55;z-index:-1}
+        .side-tag{font-family:var(--font-mono);font-size:.62rem;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;padding:0 .35rem;margin-top:-.7rem}
+        .side-nav{display:grid;gap:.35rem}
+        .side-link{display:flex;align-items:center;gap:.85rem;padding:.82rem 1.05rem;border-radius:14px;color:var(--muted);font-size:.92rem;font-weight:500;transition:.25s}
+        .side-link svg{width:20px;height:20px;flex-shrink:0}
+        .side-link:hover{color:#fff;background:rgba(255,255,255,.05);transform:translateX(3px)}
+        .side-link.active{color:#fff;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(34,211,238,.05));border:1px solid rgba(34,211,238,.4)}
+        .side-link.active svg{color:var(--cyan)}
+        .user-card{background:linear-gradient(160deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:18px;padding:1.1rem;margin-top:auto}
+        .user-row{display:flex;align-items:center;gap:.85rem}
+        .avatar{width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:#fff;flex-shrink:0}
+        .user-name{font-weight:600;font-size:.9rem}
+        .user-email{font-family:var(--font-mono);font-size:.65rem;color:var(--muted);word-break:break-all}
+        .logout-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;margin-top:1rem;padding:.7rem;border-radius:12px;border:1px solid var(--border2);background:rgba(251,113,133,.06);color:var(--muted);font-size:.85rem;font-weight:600;transition:.25s}
+        .logout-btn:hover{border-color:rgba(251,113,133,.5);color:#fda4af;background:rgba(251,113,133,.12)}
+        .logout-btn svg{width:17px;height:17px}
+        .app-nav{position:sticky;top:0;z-index:90;display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;padding:.95rem 1.4rem;background:rgba(11,17,32,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);box-shadow:0 16px 40px -24px rgba(2,6,23,.9)}
+        .app-nav.scrolled{box-shadow:0 18px 46px -20px rgba(2,6,23,.95)}
+        .brand{display:flex;align-items:center;gap:.6rem;font-family:var(--font-display);font-weight:700;font-size:1.3rem;flex-shrink:0}
+        .pill-nav{display:flex;align-items:center;gap:.3rem;flex:1 1 auto;overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+        .pill-nav::-webkit-scrollbar{height:4px}
+        .pill-nav::-webkit-scrollbar-thumb{background:rgba(148,163,184,.25);border-radius:99px}
+        .pill{display:inline-flex;align-items:center;gap:.45rem;padding:.62rem 1rem;border-radius:999px;color:var(--muted);font-size:.88rem;font-weight:600;white-space:nowrap;transition:.25s}
+        .pill svg{width:16px;height:16px;flex-shrink:0}
+        .pill:hover{color:#fff;background:rgba(255,255,255,.06)}
+        .pill.active{color:#fff;background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(34,211,238,.06));border:1px solid rgba(34,211,238,.45);box-shadow:0 8px 22px -10px rgba(34,211,238,.5)}
+        .pill.active svg{color:var(--cyan)}
+        .nav-user{display:flex;align-items:center;gap:.85rem;flex-shrink:0}
+        .avatar{width:40px;height:40px;border-radius:13px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1rem;color:#fff;flex-shrink:0;box-shadow:0 8px 20px -8px rgba(99,102,241,.6)}
+        .user-meta{min-width:0;text-align:left}
+        .user-name{font-weight:600;font-size:.84rem;color:var(--text)}
+        .user-email{font-family:var(--font-mono);font-size:.62rem;color:var(--muted);word-break:break-all}
+        .logout-btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem .95rem;border-radius:999px;border:1px solid var(--border2);background:rgba(251,113,133,.06);color:var(--muted);font-size:.8rem;font-weight:600;transition:.25s;cursor:pointer;font-family:var(--font-body)}
+        .logout-btn:hover{border-color:rgba(251,113,133,.5);color:#fda4af;background:rgba(251,113,133,.12)}
+        .logout-btn svg{width:16px;height:16px}
+
+        .main{padding:2.2rem 2.5rem 3rem;min-width:0}
+        .topbar{display:flex;align-items:center;gap:.8rem;margin-bottom:1.4rem;flex-wrap:wrap}
+        .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:0;padding:.4rem}
+        .hamburger span{width:24px;height:2px;background:var(--text);border-radius:4px;transition:.3s}
+        .greeting-tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:.5rem}
+        .page-title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,2.6vw,2.3rem);letter-spacing:-.01em}
+        .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .page-sub{color:var(--muted);font-size:.9rem;margin-top:.4rem}
+/* LEYENDA */
+        .leyenda{display:flex;gap:1.6rem;margin-bottom:2rem;flex-wrap:wrap}
+        .leyenda-item{display:flex;align-items:center;gap:.5rem;font-family:var(--font-mono);font-size:.7rem;background:rgba(15,23,42,.6);border:1px solid var(--border);padding:.45rem .9rem;border-radius:999px}
+        .leyenda-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+        .l-ok{color:var(--emerald)}
+        .l-adv{color:var(--amber)}
+        .l-fal{color:var(--rose)}
+
+        /* VEHÍCULO BLOQUE */
+        .vehiculo-block{background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:24px;margin-bottom:2rem;overflow:hidden}
+        .vehiculo-header{background:rgba(11,17,32,.6);padding:1.35rem 1.6rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .vehiculo-nombre{font-family:var(--font-display);font-weight:700;font-size:1.25rem;letter-spacing:-.01em}
+        .vehiculo-nombre svg{width:22px;height:22px;vertical-align:-3px;color:var(--cyan)}
+        .vehiculo-meta{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-top:.3rem}
+        .vehiculo-placa{font-family:var(--font-mono);font-size:.72rem;color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35);padding:.4rem .85rem;border-radius:10px}
+
+        /* SENSORES */
+        .sensores-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.2rem;padding:1.6rem}
+        .sensor-card{position:relative;background:linear-gradient(165deg,rgba(21,30,54,.9),rgba(15,23,42,.95));border:1px solid var(--border);border-radius:18px;padding:1.4rem;overflow:hidden;transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .35s,box-shadow .35s}
+        .sensor-card:hover{transform:translateY(-5px)}
+        .sensor-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+        .sensor-card.ok::before{background:linear-gradient(90deg,#34d399,#22d3ee)}
+        .sensor-card.advertencia::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+        .sensor-card.falla::before{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+        .sensor-card.ok:hover{border-color:rgba(52,211,153,.45);box-shadow:0 22px 50px -24px rgba(52,211,153,.3)}
+        .sensor-card.advertencia:hover{border-color:rgba(251,191,36,.45);box-shadow:0 22px 50px -24px rgba(251,191,36,.3)}
+        .sensor-card.falla:hover{border-color:rgba(251,113,133,.5);box-shadow:0 22px 50px -24px rgba(251,113,133,.35)}
+        .sensor-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;gap:.6rem}
+        .sensor-tipo{font-family:var(--font-mono);font-size:.66rem;color:var(--muted);letter-spacing:.1em;background:rgba(148,163,184,.08);border:1px solid var(--border);padding:.3rem .65rem;border-radius:8px}
+        .sensor-badge{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.08em;padding:.32rem .75rem;border-radius:999px;font-weight:700}
+        .sensor-badge.ok{background:rgba(52,211,153,.12);color:var(--emerald);border:1px solid rgba(52,211,153,.35)}
+        .sensor-badge.advertencia{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.35)}
+        .sensor-badge.falla{background:rgba(251,113,133,.12);color:var(--rose);border:1px solid rgba(251,113,133,.35)}
+        .sensor-nombre{font-size:.95rem;font-weight:600;margin-bottom:.3rem}
+        .sensor-dano{font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:1.1rem}
+        .sensor-nivel-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
+        .sensor-nivel-text{font-family:var(--font-mono);font-size:.64rem;color:var(--muted);letter-spacing:.08em}
+        .sensor-nivel-value{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+        .sensor-nivel-value.ok{color:var(--emerald)}
+        .sensor-nivel-value.advertencia{color:var(--amber)}
+        .sensor-nivel-value.falla{color:var(--rose)}
+        .progress-bar{background:rgba(148,163,184,.14);border-radius:99px;height:8px;overflow:hidden}
+        .progress-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+        .progress-fill.ok{background:linear-gradient(90deg,#34d399,#22d3ee)}
+        .progress-fill.advertencia{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+        .progress-fill.falla{background:linear-gradient(90deg,#f43f5e,#fb7185)}
+.empty-state{text-align:center;padding:4.5rem 2rem;background:var(--surface);border:1px dashed var(--border2);border-radius:24px}
+        .empty-state .e-icon{width:64px;height:64px;border-radius:18px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);display:grid;place-items:center;margin:0 auto 1.2rem;color:#a5b4fc}
+        .empty-state .e-icon svg{width:30px;height:30px}
+        .empty-state h2{font-family:var(--font-display);font-size:1.4rem;margin-bottom:.6rem}
+        .empty-state p{color:var(--muted);margin-bottom:1.6rem;font-size:.9rem}
+        .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.55rem;padding:.8rem 1.45rem;border-radius:999px;font-weight:600;font-size:.9rem;cursor:pointer;border:0;text-decoration:none;overflow:hidden;transition:transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s;white-space:nowrap}
+        .btn-primary{background:var(--grad);color:#fff;box-shadow:0 12px 32px -10px rgba(99,102,241,.55)}
+        .btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 46px -12px rgba(99,102,241,.78)}
+        .btn svg{width:17px;height:17px}
+
+        .theme-toggle{position:fixed!important;bottom:22px!important;right:22px!important;z-index:9999!important;width:46px!important;height:46px!important;border-radius:14px!important;border:1px solid var(--border2)!important;background:rgba(15,23,42,.9)!important;color:var(--text)!important;font-size:18px!important;cursor:pointer;box-shadow:0 14px 40px -14px rgba(2,6,23,.85)!important;backdrop-filter:blur(10px);display:flex!important;align-items:center;justify-content:center;padding:0!important;transition:.3s!important}
+        .theme-toggle:hover{transform:translateY(-3px) scale(1.06)!important;border-color:rgba(99,102,241,.7)!important}
+
+        @media(max-width:960px){
+            .app-nav{padding:.8rem 1rem;gap:.5rem}
+            .pill-nav{order:3;width:100%;margin-top:.1rem;overflow-x:auto}
+            .pill{padding:.5rem .88rem;font-size:.82rem}
+            .user-meta{display:none}
+            .logout-btn .lg-text{display:none}
+            .logout-btn{padding:0;width:38px;height:38px;justify-content:center;border-radius:12px}
+            .main{padding:1.4rem 1.2rem 2.5rem}
+            .sensores-grid{padding:1.1rem}
+        }
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    </style>
+</head>
+<body>
+<div class="layout">
+
+    <!-- NAV CLIENTE -->
+    <header class="app-nav" id="appNav">
+        <a href="{% url 'dashboard' %}" class="brand">
+            <span class="logo-orb">ST</span>
+            <span>Auto<b>Sen</b></span>
+        </a>
+        <nav class="pill-nav">
+            <a href="{% url 'dashboard' %}" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+            <a href="{% url 'vehiculos' %}" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-6v-2H6a3 3 0 0 1-3-3v-3z"/></svg>Mis Vehículos</a>
+            <a href="{% url 'vehiculo_crear' %}" class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Agregar Vehículo</a>
+            <a href="{% url 'sensores' %}" class="pill active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg>Sensores</a>
+        </nav>
+        <div class="nav-user">
+            <div class="avatar">{{ cliente.nombre_cliente|upper|slice:":1" }}</div>
+            <div class="user-meta">
+                <div class="user-name">{{ cliente.nombre_cliente|java }} {{ cliente.apellido_cliente|java }}</div>
+                <div class="user-email">{{ cliente.correo|default_if_none:"" }}</div>
+            </div>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit" class="logout-btn" title="Cerrar sesión">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+                    <span class="lg-text">Cerrar sesión</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <div class="greeting-tag">// Estado en tiempo real</div>
+                <h1 class="page-title">MIS <span class="grad-text">SENSORES</span></h1>
+                <p class="page-sub">Estado de desgaste de cada sensor de tus vehículos.</p>
+            </div>
+        </div>
+
+        <div class="leyenda">
+            <div class="leyenda-item"><span class="leyenda-dot" style="background:var(--emerald)"></span><span class="l-ok">OK (0–39%)</span></div>
+            <div class="leyenda-item"><span class="leyenda-dot" style="background:var(--amber)"></span><span class="l-adv">ADVERTENCIA (40–69%)</span></div>
+            <div class="leyenda-item"><span class="leyenda-dot" style="background:var(--rose)"></span><span class="l-fal">FALLA (70–100%)</span></div>
+        </div>
+{% if not vehiculos %}<div class="empty-state">
+            <div class="e-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+            </div>
+            <h2>Sin vehículos registrados</h2>
+            <p>Registra un vehículo para ver sus sensores.</p>
+            <a href="{% url 'vehiculo_crear' %}" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Agregar vehículo
+            </a>
+        </div>{% endif %}
+
+        {% for v in vehiculos %}<div>
+            <div class="vehiculo-block">
+                <div class="vehiculo-header">
+                    <div>
+                        <div class="vehiculo-nombre">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v3a3 3 0 0 1-3 3h-1v2h-6v-2H6a3 3 0 0 1-3-3v-3z"/></svg>
+                            <span>{{ v.nombre_vehiculo|java }} — {{ v.marca|java }}</span>
+                        </div>
+                        <div class="vehiculo-meta">Color: {{ v.color|java }}</div>
+                    </div>
+                    <span class="vehiculo-placa">{{ v.placa|default_if_none:"" }}</span>
+                </div>
+
+                {% with sensores_v=v.sensores.all %}{% if sensores_v %}<div class="sensores-grid">
+                    {% for s in sensores_v %}<div class="sensor-card {{ s.nivel|estado_nivel:"falla,advertencia,ok" }}">
+
+                        <div class="sensor-top">
+                            <span class="sensor-tipo">{{ s.tipo_sensor }}</span>
+                            <span class="sensor-badge {{ s.nivel|estado_nivel:"falla,advertencia,ok" }}">{{ s.nivel|estado_nivel:"FALLA,ADVERTENCIA,OK" }}
+                            </span>
+                        </div>
+
+                        <div class="sensor-nombre">{{ s.nombre_sensor }}</div>
+                        <div class="sensor-dano">Tipo daño: {{ s.tipo_dano|java }}</div>
+
+                        <div class="sensor-nivel-label">
+                            <span class="sensor-nivel-text">NIVEL DE DESGASTE</span>
+                            <span class="sensor-nivel-value {{ s.nivel|estado_nivel:"falla,advertencia,ok" }}">{{ s.nivel|java }}%
+                            </span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill {{ s.nivel|estado_nivel:"falla,advertencia,ok" }}" style="width:{{ s.nivel|java }}%">
+                            </div>
+                        </div>
+                    </div>{% endfor %}
+                </div>{% endif %}
+
+                {% if not sensores_v %}<div
+                     style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;">
+                    Este vehículo no tiene sensores asignados.
+                </div>{% endif %}{% endwith %}
+            </div>
+        </div>{% endfor %}
+    </main>
+</div>
+
+<script>
+    (function () {
+        var nav = document.getElementById('appNav');
+        var onScroll = function () { nav.classList.toggle('scrolled', window.scrollY > 30); };
+        window.addEventListener('scroll', onScroll); onScroll();
+        var path = location.pathname, best = null, bestLen = -1;
+        document.querySelectorAll('.pill').forEach(function (p) {
+            try {
+                var href = new URL(p.href).pathname;
+                if (href !== '/' && path.startsWith(href) && href.length > bestLen) { best = p; bestLen = href.length; }
+            } catch (e) {}
+        });
+        if (best) best.classList.add('active');
+    })();
+</script>
+
+</body>
+</html>
