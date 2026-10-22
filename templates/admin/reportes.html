@@ -66,10 +66,10 @@ tbody tr:hover{background:#15151a}
   <div class="cab">
     <div><h1>Reportes</h1><p class="sub">Consulta, filtra y exporta la información del sistema.</p></div>
     <div class="grupo">
-      <a class="btn rojo" href="/admin/reportes/pdf">Descargar PDF completo</a>
-      <a class="btn" href="/admin/reportes/excel">Descargar Excel</a>
-      <a class="btn" href="/admin/reportes/csv/sensores">CSV sensores</a>
-      <a class="btn" href="/admin/reportes/csv/fallas">CSV fallas</a>
+      <a class="btn rojo" href="{% url 'admin_reportes_pdf' %}">Descargar PDF completo</a>
+      <a class="btn" href="{% url 'admin_reportes_excel' %}">Descargar Excel</a>
+      <a class="btn" href="{% url 'admin_reportes_csv' 'sensores' %}">CSV sensores</a>
+      <a class="btn" href="{% url 'admin_reportes_csv' 'fallas' %}">CSV fallas</a>
     </div>
   </div>
 
@@ -136,14 +136,14 @@ tbody tr:hover{background:#15151a}
     <div class="grupo">
       <button type="submit" class="btn rojo">Filtrar</button>
       <a class="btn" href="{% url 'admin_reportes_filtrado' %}">Limpiar</a>
-      <button type="submit" formaction="/admin/reportes/pdf" class="btn">PDF filtrado</button>
-      <button type="submit" formaction="/admin/reportes/excel" class="btn">Excel filtrado</button>
+      <button type="submit" formaction="{% url 'admin_reportes_pdf' %}" class="btn">PDF filtrado</button>
+      <button type="submit" formaction="{% url 'admin_reportes_excel' %}" class="btn">Excel filtrado</button>
     </div>
   </form>
 
   <div class="sec">
     <h2>Clientes</h2>
-    <a class="btn chico" href="/admin/reportes/csv/clientes">Exportar CSV</a>
+    <a class="btn chico" href="{% url 'admin_reportes_csv' 'clientes' %}">Exportar CSV</a>
   </div>
   <div class="tabla-wrap">
     <table>
@@ -156,7 +156,7 @@ tbody tr:hover{background:#15151a}
           <td>{{ c.correo|default_if_none:"" }}</td>
           <td><span class="badge {{ c.estado|default_if_none:"" }}">{{ c.estado|default_if_none:"" }}</span></td>
           <td>{{ c.vehiculos.count }}</td>
-          <td><a class="btn chico" href="/admin/reportes/cliente/{{ c.id_cliente }}/pdf">PDF</a></td>
+          <td><a class="btn chico" href="{% url 'admin_reportes_cliente_pdf' c.id_cliente %}">PDF</a></td>
         </tr>{% endfor %}
       </tbody>
     </table>
@@ -203,7 +203,7 @@ tbody tr:hover{background:#15151a}
 
   <div class="sec">
     <h2>Clientes bloqueados</h2>
-    <a class="btn chico" href="/admin/reportes/csv/bloqueados">Exportar CSV</a>
+    <a class="btn chico" href="{% url 'admin_reportes_csv' 'bloqueados' %}">Exportar CSV</a>
   </div>
   <div class="tabla-wrap">
     <table>

@@ -1,6 +1,7 @@
-"""Vistas de reportes (equivalen a ReporteController y a AdminController.reportes)."""
+"""Vistas de reportes (equivalen a ReporteController y a AdminController.reportes y exportaciones)."""
 import time
 
+from django.http import HttpResponse
 from django.shortcuts import render
 
 from core.auth import admin_requerido
@@ -8,8 +9,11 @@ from core.http import metodos
 from core.models import Cliente, Sensor, Vehiculo
 from core.patrones.singleton import UmbralesReporte
 from core.utilidades import ahora, redondear_java
+from reportes.exportar import csv_reporte, datos_pdf_general, excel_reporte, pdf_cliente, pdf_general
 from reportes.filtros import (STRATEGY_FILTRO, filtrar_clientes, filtrar_sensores, nz_nivel, ordenar_sensores,
                               parametros_filtro)
+
+TIPO_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 TIPOS_PLACA = ["particular", "publico"]
 
@@ -127,3 +131,44 @@ def reporte_cliente(request, cliente_id):
         "reporteId": f"RPT-{int(time.time() * 1000)}",
     }
     return render(request, "admin/reporte-cliente-pdf.html", contexto)
+
+
+# ---------------------------------------------------------------------------
+# Exportaciones
+# ---------------------------------------------------------------------------
+def _descarga(contenido, tipo_contenido: str, archivo: str) -> HttpResponse:
+    respuesta = HttpResponse(contenido, content_type=tipo_contenido)
+    respuesta["Content-Disposition"] = f"attachment; filename={archivo}"
+    return respuesta
+
+
+@admin_requerido
+@metodos("GET")
+def exportar_csv(request, tipo):
+    """Equivale a AdminController.exportarCsv (tipos: clientes, sensores, fallas, bloqueados)."""
+    return _descarga(csv_reporte(tipo).encode("utf-8"), "text/csv; charset=UTF-8", f"reporte-{tipo}.csv")
+
+
+@admin_requerido
+@metodos("GET")
+def exportar_excel(request):
+    """Equivale a ReporteController.exportarExcel, con el filtro de tipo de placa (F5)."""
+    filtros = parametros_filtro(request)
+    clientes, sensores = datos_pdf_general(filtros)
+    return _descarga(excel_reporte(clientes, sensores), TIPO_EXCEL, "reporte-autosen.xlsx")
+
+
+@admin_requerido
+@metodos("GET")
+def exportar_pdf(request):
+    """Equivale a AdminController.exportarPdfCompleto, aplicando también búsqueda, marca y tipo de placa (F5)."""
+    clientes, sensores = datos_pdf_general(parametros_filtro(request))
+    return _descarga(pdf_general(clientes, sensores), "application/pdf", "reporte-autosen.pdf")
+
+
+@admin_requerido
+@metodos("GET")
+def exportar_pdf_cliente(request, id):
+    """Equivale a AdminController.exportarPdfCliente."""
+    cliente = Cliente.objects.get(pk=id)
+    return _descarga(pdf_cliente(cliente), "application/pdf", f"reporte-{cliente.nombre_cliente.lower()}.pdf")
