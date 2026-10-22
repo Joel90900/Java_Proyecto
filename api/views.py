@@ -10,11 +10,12 @@ import re
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from core.auth import cifrar_contrasena, verificar_contrasena
+from api.obd2 import calcular_nivel, crear_alerta_si_corresponde, estado_por_nivel, unidad_de, valor_simulado
+from core.auth import cifrar_contrasena, cliente_requerido, verificar_contrasena
 from core.http import metodos, parametro
-from core.models import Cliente, Sensor, Vehiculo
+from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
 from core.sensores_defecto import crear_sensores_por_defecto
-from core.utilidades import entero_java
+from core.utilidades import ahora, entero_java, fecha_java
 
 FORMATO_PLACA = r"[A-Z]{3}-?[0-9]{3}"
 
@@ -198,3 +199,153 @@ def simular(request):
             s.nivel = max(0, min(100, s.nivel + delta))
             s.save()
     return respuesta_json(datos_cliente_json(correo))
+
+
+# ---------------------------------------------------------------------------
+# Obd2Controller
+# ---------------------------------------------------------------------------
+def lectura_json(lectura: Lectura, con_id: bool = True) -> dict:
+    datos = {"idLectura": lectura.id_lectura} if con_id else {}
+    datos.update({
+        "nombreSensor": lectura.nombre_sensor,
+        "tipoSensor": lectura.tipo_sensor,
+        "valor": lectura.valor,
+        "unidad": lectura.unidad,
+        "nivel": lectura.nivel,
+        "estado": lectura.estado,
+        "fechaLectura": fecha_java(lectura.fecha_lectura),
+    })
+    return datos
+
+
+@csrf_exempt
+@metodos("POST")
+def guardar_lectura(request):
+    """Equivale a Obd2Controller.guardarLectura (lecturas reales del ELM327 enviadas por la app)."""
+    id_vehiculo = parametro(request, "idVehiculo", int)
+    nombre_sensor = parametro(request, "nombreSensor")
+    tipo_sensor = parametro(request, "tipoSensor")
+    valor = parametro(request, "valor", float)
+    unidad = parametro(request, "unidad", requerido=False)
+    if not Vehiculo.objects.filter(pk=id_vehiculo).exists():
+        return respuesta_json({"ok": False, "mensaje": "Vehículo no encontrado."})
+
+    nivel = calcular_nivel(tipo_sensor, valor)
+    lectura = Lectura.objects.create(
+        id_vehiculo=id_vehiculo,
+        nombre_sensor=nombre_sensor,
+        tipo_sensor=tipo_sensor,
+        valor=valor,
+        unidad="" if unidad is None else unidad,
+        nivel=nivel,
+        estado=estado_por_nivel(nivel),
+        fecha_lectura=ahora(),
+    )
+    crear_alerta_si_corresponde(id_vehiculo, nombre_sensor, tipo_sensor, valor, nivel,
+                                "" if unidad is None else " " + unidad)
+    return respuesta_json({"ok": True, "mensaje": "Lectura registrada.", "idLectura": lectura.id_lectura,
+                           "nivel": nivel, "estado": lectura.estado})
+
+
+@csrf_exempt
+@metodos("GET", "POST")
+def elm(request, id):
+    """Equivale a Obd2Controller.guardarElm (POST) y obtenerElm (GET)."""
+    if request.method == "POST":
+        elm_mac = parametro(request, "elmMac")
+        vehiculo = Vehiculo.objects.filter(pk=id).first()
+        if vehiculo is None:
+            return respuesta_json({"ok": False, "mensaje": "Vehículo no encontrado."})
+        vehiculo.elm_mac = elm_mac
+        vehiculo.save()
+        return respuesta_json({"ok": True, "mensaje": "ELM327 guardado para reconexión futura.", "elmMac": elm_mac})
+
+    vehiculo = Vehiculo.objects.filter(pk=id).first()
+    if vehiculo is None:
+        return respuesta_json({"ok": False, "mensaje": "Vehículo no encontrado."})
+    sin_elm = vehiculo.elm_mac is None or vehiculo.elm_mac.strip() == ""
+    return respuesta_json({
+        "ok": True,
+        "idVehiculo": id,
+        "elmMac": vehiculo.elm_mac,
+        "conectado": False,
+        "mensaje": "No hay un ELM327 asociado a este vehículo." if sin_elm
+        else "ELM327 registrado. La conexión Bluetooth debe realizarse desde Android.",
+    })
+
+
+@csrf_exempt
+@metodos("GET")
+def historial(request, id_vehiculo):
+    """Equivale a Obd2Controller.historial: todas las lecturas del vehículo, de la más reciente a la más antigua."""
+    lecturas = Lectura.objects.filter(id_vehiculo=id_vehiculo).order_by("-id_lectura")
+    return respuesta_json({"ok": True, "lecturas": [lectura_json(lectura) for lectura in lecturas]})
+
+
+@csrf_exempt
+@metodos("GET")
+def alertas(request, id_vehiculo):
+    """Equivale a Obd2Controller.alertas: mira solo las 50 alertas más recientes de todo el sistema."""
+    recientes = Alerta.objects.order_by("-id_alerta")[:50]
+    return respuesta_json({"ok": True, "alertas": [
+        {
+            "idAlerta": a.id_alerta,
+            "nombreSensor": a.nombre_sensor,
+            "tipoSensor": a.tipo_sensor,
+            "valor": a.valor,
+            "nivel": a.nivel,
+            "tipo": a.tipo,
+            "mensaje": a.mensaje,
+            "leida": a.leida is not None and a.leida == 1,
+            "fechaAlerta": fecha_java(a.fecha_alerta),
+        }
+        for a in recientes if a.id_vehiculo == id_vehiculo
+    ]})
+
+
+@csrf_exempt
+@metodos("GET")
+def ultima(request, id_vehiculo):
+    """Equivale a Obd2Controller.ultima: las 30 lecturas más recientes del vehículo."""
+    lecturas = Lectura.objects.filter(id_vehiculo=id_vehiculo).order_by("-id_lectura")[:30]
+    return respuesta_json({"ok": True, "lecturas": [lectura_json(lectura, con_id=False) for lectura in lecturas]})
+
+
+@csrf_exempt
+@cliente_requerido
+@metodos("POST")
+def conectar(request):
+    """
+    Equivale a Obd2Controller.conectar (botón "Conectar Bluetooth" del dashboard web).
+
+    Simula el escáner ELM327: toma el primer vehículo del cliente, genera una lectura
+    aleatoria por sensor, la guarda y devuelve la telemetría.
+    """
+    vehiculos = list(Vehiculo.objects.filter(cliente=request.cliente))
+    if not vehiculos:
+        return respuesta_json({"ok": False, "conectado": False,
+                               "mensaje": "Primero registra un vehículo para poder conectar el escáner ELM327."})
+    v = vehiculos[0]
+    sin_elm = v.elm_mac is None or v.elm_mac.strip() == ""
+    respuesta = {
+        "ok": True,
+        "conectado": True,
+        "idVehiculo": v.id_vehiculo,
+        "vehiculo": (v.nombre_vehiculo or "") + " " + (v.placa or ""),
+        "elmMac": "ELM327-SIM-" + (v.placa or "") if sin_elm else v.elm_mac,
+        "mensaje": "Escáner ELM327 conectado por Bluetooth. Recibiendo datos del vehículo en tiempo real.",
+    }
+    lecturas = []
+    for s in Sensor.objects.filter(vehiculo=v):
+        tipo = s.tipo_sensor
+        valor = valor_simulado(tipo)
+        unidad = unidad_de(tipo)
+        nivel = calcular_nivel(tipo, valor)
+        estado = estado_por_nivel(nivel)
+        Lectura.objects.create(id_vehiculo=v.id_vehiculo, nombre_sensor=s.nombre_sensor, tipo_sensor=tipo, valor=valor,
+                               unidad=unidad, nivel=nivel, estado=estado, fecha_lectura=ahora())
+        crear_alerta_si_corresponde(v.id_vehiculo, s.nombre_sensor, tipo, valor, nivel, " " + unidad)
+        lecturas.append({"nombreSensor": s.nombre_sensor, "tipoSensor": tipo, "valor": valor, "unidad": unidad,
+                         "nivel": nivel, "estado": estado})
+    respuesta["lecturas"] = lecturas
+    return respuesta_json(respuesta)
