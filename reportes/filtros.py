@@ -4,9 +4,8 @@ Filtros y orden de los reportes (equivalen a los helpers de ReporteController).
 Los usan la vista /admin/reportes-filtrado, la exportación a Excel y el PDF general,
 así que los tres aplican exactamente los mismos criterios (F5).
 """
-import unicodedata
-
 from core.http import parametro
+from core.normalizacion import sin_tildes
 from core.patrones.fabrica import EstadoSensorStrategyFactory, TipoEstado
 
 STRATEGY_FILTRO = EstadoSensorStrategyFactory.crear(TipoEstado.FILTRO)
@@ -23,12 +22,6 @@ def _nr(texto: str | None) -> str:
 
 def nz_nivel(sensor) -> int:
     return 0 if sensor.nivel is None else sensor.nivel
-
-
-def sin_tildes(texto: str | None) -> str:
-    """Minúsculas y sin marcas diacríticas: "Público" y "publico" quedan iguales."""
-    descompuesto = unicodedata.normalize("NFKD", _nr(texto))
-    return "".join(c for c in descompuesto if not unicodedata.combining(c)).lower()
 
 
 def normalizar_rango(nivel_min: int | None, nivel_max: int | None) -> tuple[int | None, int | None]:
