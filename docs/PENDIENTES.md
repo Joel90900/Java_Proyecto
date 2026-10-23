@@ -6,7 +6,8 @@ corrigieron los defectos que bloqueaban el uso (F1–F6 y S1–S3 en la especifi
 
 Lo siguiente se **conservó a propósito**, para que la migración fuera fiel. Queda
 anotado para que el equipo decida si lo corrige más adelante. Las rutas Java son
-relativas a `referencia/proyecto-java/src/main/java/com/example/sensores_vsc/`.
+relativas a `src/main/java/com/example/sensores_vsc/` del proyecto Spring Boot (rama
+`final-java` del repositorio).
 
 | # | Comportamiento | Dónde está en Python | Dónde estaba en Java |
 |---|---|---|---|
