@@ -39,17 +39,17 @@ class LoginClienteTests(TestCase):
 
 
 class RegistroTests(TestCase):
-    def test_registro_sin_recortar_espacios(self):
+    def test_registro_recorta_espacios(self):
         r = self.client.post("/register", {"nombre": " Ana ", "apellido": "Paz", "correo": "ana@test.com",
                                            "contrasena": "secreto"})
         self.assertRedirects(r, "/login", fetch_redirect_response=False)
         ana = Cliente.objects.get(correo="ana@test.com")
-        self.assertEqual((ana.nombre_cliente, ana.estado), (" Ana ", "activo"))
+        self.assertEqual((ana.nombre_cliente, ana.estado), ("Ana", "activo"))
         self.assertTrue(ana.contrasena.startswith("$2a$10$"))
 
     def test_registro_correo_duplicado(self):
         crear_cliente()
-        r = self.client.post("/register", {"nombre": "J", "apellido": "M", "correo": "JOEL@TEST.COM", "contrasena": "x"})
+        r = self.client.post("/register", {"nombre": "J", "apellido": "M", "correo": "JOEL@TEST.COM", "contrasena": "secreto"})
         self.assertContains(r, "El correo ya está registrado.")
 
 

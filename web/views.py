@@ -1,6 +1,4 @@
 """Vistas de la web del cliente (equivalen a AuthController, DashboardController y VehiculoController)."""
-import re
-
 from django.shortcuts import redirect, render
 
 from core.auth import (cerrar_sesion_cliente, cifrar_contrasena, cliente_requerido, iniciar_sesion_cliente,
@@ -8,10 +6,11 @@ from core.auth import (cerrar_sesion_cliente, cifrar_contrasena, cliente_requeri
 from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Vehiculo
+from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.sensores_defecto import crear_sensores_por_defecto
-from core.utilidades import entero_java
+from core.validaciones import validar_persona, validar_vehiculo
 
-FORMATO_PLACA = r"[A-Z]{3}-?[0-9]{3}"
+PLACA_DUPLICADA = "Ya existe un vehículo registrado con esa placa."
 
 
 @metodos("GET")
@@ -31,7 +30,7 @@ def login(request):
     """Equivale a AuthController.showLogin + formLogin de Spring (ClienteUserDetailsService)."""
     if request.method != "POST":
         return render(request, "paginas/login.html")
-    correo = request.POST.get("correo", "")
+    correo = request.POST.get("correo", "").strip()
     contrasena = request.POST.get("contrasena", "")
     cliente = igual_mysql(Cliente.objects.all(), "correo", correo).first()
     if cliente is None or cliente.estado == "bloqueado" or not verificar_contrasena(contrasena, cliente.contrasena):
@@ -48,15 +47,18 @@ def logout(request):
 
 @metodos("GET", "POST")
 def register(request):
-    """Equivale a AuthController.showRegister / register (sin recortar espacios, como en Java)."""
+    """Equivale a AuthController.showRegister / register, con las validaciones comunes (lote A)."""
     if request.method != "POST":
         return render(request, "paginas/register.html")
-    nombre = parametro(request, "nombre")
-    apellido = parametro(request, "apellido")
-    correo = parametro(request, "correo")
+    nombre = parametro(request, "nombre").strip()
+    apellido = parametro(request, "apellido").strip()
+    correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-    if igual_mysql(Cliente.objects.all(), "correo", correo).exists():
-        return render(request, "paginas/register.html", {"error": "El correo ya está registrado."})
+    error = validar_persona([nombre, apellido], correo, contrasena)
+    if error is None and igual_mysql(Cliente.objects.all(), "correo", correo).exists():
+        error = "El correo ya está registrado."
+    if error:
+        return render(request, "paginas/register.html", {"error": error})
     Cliente.objects.create(
         nombre_cliente=nombre,
         apellido_cliente=apellido,
@@ -111,38 +113,29 @@ def sensores(request):
 @cliente_requerido
 @metodos("GET", "POST")
 def vehiculo_crear(request):
-    """Equivale a VehiculoController.showCrear / crear."""
+    """Equivale a VehiculoController.showCrear / crear, con las validaciones comunes (lote A)."""
     if request.method != "POST":
         return render(request, "paginas/crear-vehiculo.html")
-    nombre_vehiculo = parametro(request, "nombreVehiculo")
-    marca = parametro(request, "marca")
-    modelo = parametro(request, "modelo")
-    color = parametro(request, "color")
-    placa = parametro(request, "placa")
+    nombre_vehiculo = parametro(request, "nombreVehiculo").strip()
+    marca = parametro(request, "marca").strip()
+    modelo = parametro(request, "modelo").strip()
+    color = parametro(request, "color").strip()
+    placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
 
-    def error(mensaje):
-        return render(request, "paginas/crear-vehiculo.html", {"error": mensaje})
-
-    if any(c.strip() == "" for c in (nombre_vehiculo, marca, modelo, color, placa, tipo_placa)):
-        return error("Todos los campos son obligatorios.")
-    anio = entero_java(modelo)
-    if anio is None:
-        return error("El año debe ser un número válido.")
-    if anio < 1990 or anio > 2030:
-        return error("El año debe estar entre 1990 y 2030.")
-    if igual_mysql(Vehiculo.objects.all(), "placa", placa.upper()).exists():
-        return error("Ya existe un vehículo registrado con esa placa.")
-    if not re.fullmatch(FORMATO_PLACA, placa.upper()):
-        return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+    if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
+        error = PLACA_DUPLICADA
+    if error:
+        return render(request, "paginas/crear-vehiculo.html", {"error": error})
 
     vehiculo = Vehiculo.objects.create(
-        nombre_vehiculo=nombre_vehiculo.strip(),
-        marca=marca.strip(),
-        modelo=modelo + "-01-01",
-        color=color.strip(),
-        placa=placa.upper().strip(),
-        tipo_placa=tipo_placa,
+        nombre_vehiculo=nombre_vehiculo,
+        marca=marca,
+        modelo=normalizar_modelo(modelo),
+        color=color,
+        placa=placa,
+        tipo_placa=normalizar_tipo_placa(tipo_placa),
         cliente=request.cliente,
     )
     crear_sensores_por_defecto(vehiculo)
@@ -152,12 +145,12 @@ def vehiculo_crear(request):
 @cliente_requerido
 @metodos("GET", "POST")
 def vehiculo_editar(request, id):
-    """Equivale a VehiculoController.showEditar / editar."""
+    """Equivale a VehiculoController.showEditar / editar, con las validaciones comunes (lote A)."""
     if request.method == "POST":
-        nombre_vehiculo = parametro(request, "nombreVehiculo")
-        marca = parametro(request, "marca")
-        color = parametro(request, "color")
-        placa = parametro(request, "placa")
+        nombre_vehiculo = parametro(request, "nombreVehiculo").strip()
+        marca = parametro(request, "marca").strip()
+        color = parametro(request, "color").strip()
+        placa = normalizar_placa(parametro(request, "placa"))
         tipo_placa = parametro(request, "tipoPlaca")
     cliente = request.cliente
     vehiculo = Vehiculo.objects.get(pk=id)
@@ -166,20 +159,18 @@ def vehiculo_editar(request, id):
     if request.method != "POST":
         return render(request, "paginas/editar-vehiculo.html", {"vehiculo": vehiculo, "cliente": cliente})
 
-    def error(mensaje):
-        return render(request, "paginas/editar-vehiculo.html",
-                      {"error": mensaje, "vehiculo": vehiculo, "cliente": cliente})
+    error = validar_vehiculo(nombre_vehiculo, marca, None, color, placa, tipo_placa, modelo_obligatorio=False)
+    otros = Vehiculo.objects.exclude(pk=vehiculo.pk)
+    if error is None and igual_mysql(otros, "placa", placa).exists():
+        error = PLACA_DUPLICADA
+    if error:
+        return render(request, "paginas/editar-vehiculo.html", {"error": error, "vehiculo": vehiculo, "cliente": cliente})
 
-    if any(c.strip() == "" for c in (nombre_vehiculo, marca, color, placa)):
-        return error("Todos los campos son obligatorios.")
-    if placa.upper() != vehiculo.placa and igual_mysql(Vehiculo.objects.all(), "placa", placa.upper()).exists():
-        return error("Ya existe un vehículo con esa placa.")
-
-    vehiculo.nombre_vehiculo = nombre_vehiculo.strip()
-    vehiculo.marca = marca.strip()
-    vehiculo.color = color.strip()
-    vehiculo.placa = placa.upper().strip()
-    vehiculo.tipo_placa = tipo_placa
+    vehiculo.nombre_vehiculo = nombre_vehiculo
+    vehiculo.marca = marca
+    vehiculo.color = color
+    vehiculo.placa = placa
+    vehiculo.tipo_placa = normalizar_tipo_placa(tipo_placa)
     vehiculo.save()
     return redirect("/vehiculos")
 

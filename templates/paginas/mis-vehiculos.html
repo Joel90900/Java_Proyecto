@@ -205,6 +205,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a14 14 0 0 1 20 0"/><path d="M5 12a10 10 0 0 1 14 0"/><path d="M8.5 15.5a4.5 4.5 0 0 1 7 0"/><circle cx="12" cy="18.5" r="1.5"/></svg>
                         Ver sensores
                     </a>
+                    <form method="post" action="{% url 'vehiculo_eliminar' v.id_vehiculo %}" onsubmit="return confirm('¿Eliminar este vehículo y sus sensores?')" style="display:contents">{% csrf_token %}<button type="submit" class="btn-mini btn-mini-edit">Eliminar</button></form>
                 </div>
             </div>{% endfor %}
         </div>{% endif %}

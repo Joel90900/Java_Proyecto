@@ -41,12 +41,12 @@ class CrearVehiculoTests(Base):
             ("ECT", "Sensor de Temperatura del Refrigerante (ECT)", "Sobrecalentamiento", 0),
             ("MAP", "Sensor de Presión Absoluta del Colector (MAP)", "Falla en presión", 0)])
 
-    def test_validaciones_en_el_orden_de_java(self):
+    def test_validaciones_en_orden(self):
         crear_vehiculo(self.cliente, placa="xyz")  # placa no válida, como las importadas
         casos = [({"marca": "  "}, "Todos los campos son obligatorios."),
                  ({"modelo": "1989"}, "El año debe estar entre 1990 y 2030."),
-                 ({"modelo": " 2020"}, "El año debe ser un número válido."),
-                 ({"placa": "XYZ"}, "Ya existe un vehículo registrado con esa placa."),  # duplicado antes que formato
+                 ({"modelo": "dos mil"}, "El año debe ser un número válido."),
+                 ({"placa": "XYZ"}, "Formato de placa inválido. Ejemplo: ABC123 o ABC-123."),  # formato antes que duplicado
                  ({"placa": "AB1234"}, "Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")]
         for cambio, mensaje in casos:
             with self.subTest(cambio):
@@ -90,7 +90,7 @@ class EditarEliminarTests(Base):
     def test_editar_errores(self):
         base = {"nombreVehiculo": "N", "marca": "K", "color": "A", "tipoPlaca": "publico"}
         self.assertContains(self.client.post(f"/vehiculos/{self.v.pk}/editar", {**base, "placa": "otr111"}),
-                            "Ya existe un vehículo con esa placa.")
+                            "Ya existe un vehículo registrado con esa placa.")
         self.assertContains(self.client.post(f"/vehiculos/{self.v.pk}/editar", {**base, "placa": " "}),
                             "Todos los campos son obligatorios.")
         r = self.client.post(f"/vehiculos/{self.v.pk}/editar", {**base, "placa": "abc123"})  # su propia placa en minúsculas
