@@ -1,8 +1,8 @@
 """
 Importación de un dump de phpMyAdmin (MySQL/MariaDB) a la base de Django.
 
-Lee las sentencias INSERT del dump, conserva las claves primarias y los datos tal
-cual (sin limpiar placas, estados ni hashes) y reinicia las secuencias de
+Lee las sentencias INSERT del dump, conserva las claves primarias y los hashes,
+normaliza placas, tipos de placa, modelo y niveles vacíos (lote A) y reinicia las secuencias de
 PostgreSQL para que los registros nuevos continúen después de los importados.
 """
 import re
@@ -12,6 +12,7 @@ from django.core.management.color import no_style
 from django.db import connection, models, transaction
 
 from core.models import Alerta, Cliente, Lectura, Sensor, Usuario, Vehiculo
+from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 
 # Orden de inserción: primero las tablas referenciadas por claves foráneas.
 TABLAS = [
@@ -104,6 +105,13 @@ def _crear_objeto(modelo, columnas: list[str], fila: list, avisos: list[str]):
         elif isinstance(campo, models.FloatField) and isinstance(valor, int):
             valor = float(valor)
         datos[campo.attname] = valor
+    if modelo is Vehiculo:
+        datos["placa"] = normalizar_placa(datos.get("placa"))
+        if "tipo_placa" in datos:
+            datos["tipo_placa"] = normalizar_tipo_placa(datos["tipo_placa"]) or datos["tipo_placa"]
+        datos["modelo"] = normalizar_modelo(datos.get("modelo"))
+    elif modelo is Sensor and datos.get("nivel") is None:
+        datos["nivel"] = 0
     return modelo(**datos)
 
 

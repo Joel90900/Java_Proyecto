@@ -34,9 +34,9 @@ class Cliente(models.Model):
     apellido_cliente = models.CharField(max_length=60, db_column="Apellido_cliente")
     contrasena = models.CharField(max_length=100, db_column="Contrasena")
     correo = models.CharField(max_length=70, db_column="Correo")
-    # Java no usa esta columna; se conserva por los datos importados.
+    # Java no usa esta columna; se conserva por los datos importados. Al borrar el admin queda vacía.
     usuario = models.ForeignKey(
-        Usuario, on_delete=models.PROTECT, null=True, blank=True, db_column="Id_usuario", related_name="clientes"
+        Usuario, on_delete=models.SET_NULL, null=True, blank=True, db_column="Id_usuario", related_name="clientes"
     )
     estado = models.CharField(max_length=10, null=True, blank=True, default="activo", db_column="Estado")
 
@@ -79,7 +79,7 @@ class Sensor(models.Model):
     tipo_sensor = models.CharField(max_length=50, db_column="Tipo_sensor")
     # Admite NULL (F4): el panel permite dejarlo vacío.
     tipo_dano = models.CharField(max_length=90, null=True, blank=True, db_column="Tipo_daño")
-    nivel = models.IntegerField(null=True, blank=True, default=0, db_column="Nivel")
+    nivel = models.IntegerField(default=0, db_column="Nivel")
     estado = models.CharField(max_length=20, null=True, blank=True, db_column="Estado")
     # CASCADE equivale al CascadeType.ALL de Vehiculo.sensores en JPA.
     vehiculo = models.ForeignKey(

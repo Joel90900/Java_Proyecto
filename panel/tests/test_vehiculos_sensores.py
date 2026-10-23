@@ -54,7 +54,7 @@ class VehiculosAdminTests(Base):
 class FormulariosTests(Base):
     def test_formularios_se_muestran_con_sus_datos(self):
         v = crear_vehiculo(self.cliente, placa="EMT262", elm_mac=None, modelo=None)
-        s = crear_sensor(v, nivel=None, tipo_dano=None)
+        s = crear_sensor(v, nivel=0, tipo_dano=None)
         paginas = {"/admin/cliente/nuevo": "Nuevo cliente", "/admin/usuario/nuevo": "Nuevo administrador",
                    "/admin/vehiculo/nuevo": "Joel Moncaleano", "/admin/sensor/nuevo": "Onix - EMT262 (Joel)",
                    f"/admin/cliente/{self.cliente.pk}/editar": 'value="Joel"',

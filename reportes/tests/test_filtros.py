@@ -13,7 +13,7 @@ def datos_reportes():
     s1 = crear_sensor(v1, nivel=10, tipo="MAF", nombre="Sensor MAF")
     s2 = crear_sensor(v1, nivel=50, tipo="O2", nombre="Sensor O2")
     s3 = crear_sensor(v2, nivel=80, tipo="ECT", nombre="Sensor ECT", tipo_dano=None)
-    s4 = crear_sensor(v2, nivel=None, tipo="TEST", nombre="Prueba")
+    s4 = crear_sensor(v2, nivel=0, tipo="TEST", nombre="Prueba")
     return joel, ana, (s1, s2, s3, s4)
 
 
@@ -30,7 +30,7 @@ class FiltrosTests(TestCase):
         self.assertEqual(f("OPTIMO", None, None, None), [self.s1, self.s4])
         self.assertEqual((f(None, "O2", None, None), f(None, "o2", None, None)), ([self.s2], []))
         self.assertEqual(f(None, None, 40, None), [self.s2, self.s3])
-        self.assertEqual(f(None, None, None, 50), [self.s1, self.s2])
+        self.assertEqual(f(None, None, None, 50), [self.s1, self.s2, self.s4])
 
     def test_filtrar_clientes(self):
         def f(*a):

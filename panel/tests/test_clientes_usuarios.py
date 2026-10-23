@@ -22,7 +22,7 @@ class Base(TestCase):
 class DashboardAdminTests(Base):
     def test_totales_con_nivel_nulo(self):  # Review Focus 2
         v = crear_vehiculo(crear_cliente())
-        for n in (10, 45, 75, None):
+        for n in (10, 45, 75, 0):
             crear_sensor(v, nivel=n)
         r = self.client.get("/admin")
         self.assertEqual([r.context[k] for k in ("totalSensores", "totalFallas", "totalAdvertencias", "sensoresOk",

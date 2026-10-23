@@ -43,10 +43,10 @@ class ImportarMysqlTests(TestCase):
         self.assertEqual((juan.apellido_cliente, juan.usuario, juan.estado), ("Ro'cio", None, "bloqueado"))
         v = Vehiculo.objects.get(pk=4)
         self.assertEqual((v.nombre_vehiculo, v.placa, v.tipo_placa, v.elm_mac),
-                         ("Onix, el rojo", "emt262", "Público", None))
+                         ("Onix, el rojo", "EMT262", "publico", None))
         s = Sensor.objects.get(pk=21)
         self.assertEqual((s.tipo_dano, s.estado), ("Falla en mezcla\ncombustible", None))
-        self.assertIsNone(Sensor.objects.get(pk=22).nivel)
+        self.assertEqual(Sensor.objects.get(pk=22).nivel, 0)
         lectura = Lectura.objects.get(pk=7)
         self.assertEqual((lectura.valor, lectura.fecha_lectura), (2345.5, datetime(2026, 9, 14, 20, 4, 25)))
         self.assertEqual(Alerta.objects.get(pk=3).mensaje, "Falla crítica; revisar (motor)")
