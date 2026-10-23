@@ -1,6 +1,4 @@
 """Vistas del panel de administración (equivalen a AdminController)."""
-import re
-
 from django.shortcuts import redirect, render
 
 from core.auth import (admin_requerido, cerrar_sesion_admin, cifrar_contrasena, iniciar_sesion_admin,
@@ -8,7 +6,11 @@ from core.auth import (admin_requerido, cerrar_sesion_admin, cifrar_contrasena, 
 from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Usuario, Vehiculo
+from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.patrones.singleton import UmbralesReporte
+from core.validaciones import validar_persona, validar_vehiculo
+
+PLACA_DUPLICADA = "Ya existe un vehículo registrado con esa placa."
 
 
 # ---------------------------------------------------------------------------
@@ -19,7 +21,7 @@ def login(request):
     """Equivale a AdminController.loginPage + formLogin de Spring (AdminUserDetailsService)."""
     if request.method != "POST":
         return render(request, "admin/login.html")
-    correo = request.POST.get("correo", "")
+    correo = request.POST.get("correo", "").strip()
     contrasena = request.POST.get("contrasena", "")
     usuario = igual_mysql(Usuario.objects.all(), "correo", correo).first()
     if usuario is None or not verificar_contrasena(contrasena, usuario.contrasena):
@@ -78,8 +80,9 @@ def nosotros(request):
 # ---------------------------------------------------------------------------
 # Clientes
 # ---------------------------------------------------------------------------
-def correo_valido(correo: str) -> bool:
-    return "@" in correo and "." in correo
+def contrasena_nueva(contrasena: str | None) -> str | None:
+    """Al editar, una contraseña vacía o solo con espacios conserva la actual."""
+    return None if contrasena is None or contrasena.strip() == "" else contrasena
 
 
 @admin_requerido
@@ -102,27 +105,20 @@ def cliente_nuevo(request):
 @admin_requerido
 @metodos("POST")
 def cliente_crear(request):
-    """Equivale a AdminController.crearCliente."""
-    nombre = parametro(request, "nombre")
-    apellido = parametro(request, "apellido")
-    correo = parametro(request, "correo")
+    """Equivale a AdminController.crearCliente, con las validaciones comunes (lote A)."""
+    nombre = parametro(request, "nombre").strip()
+    apellido = parametro(request, "apellido").strip()
+    correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-
-    def error(mensaje):
-        return render(request, "admin/crear-cliente.html", {"error": mensaje})
-
-    if any(c.strip() == "" for c in (nombre, apellido, correo, contrasena)):
-        return error("Todos los campos son obligatorios.")
-    if not correo_valido(correo):
-        return error("El correo no tiene un formato válido.")
-    if len(contrasena) < 6:
-        return error("La contraseña debe tener al menos 6 caracteres.")
-    if igual_mysql(Cliente.objects.all(), "correo", correo.strip()).exists():
-        return error("Ya existe un cliente con ese correo.")
+    error = validar_persona([nombre, apellido], correo, contrasena)
+    if error is None and igual_mysql(Cliente.objects.all(), "correo", correo).exists():
+        error = "Ya existe un cliente con ese correo."
+    if error:
+        return render(request, "admin/crear-cliente.html", {"error": error})
     Cliente.objects.create(
-        nombre_cliente=nombre.strip(),
-        apellido_cliente=apellido.strip(),
-        correo=correo.strip(),
+        nombre_cliente=nombre,
+        apellido_cliente=apellido,
+        correo=correo,
         contrasena=cifrar_contrasena(contrasena),
         estado="activo",
     )
@@ -142,34 +138,25 @@ def cliente_eliminar(request, id):
 @admin_requerido
 @metodos("GET", "POST")
 def cliente_editar(request, id):
-    """Equivale a AdminController.showEditarCliente / editarCliente."""
+    """Equivale a AdminController.showEditarCliente / editarCliente, con las validaciones comunes (lote A)."""
     if request.method != "POST":
         cliente = Cliente.objects.get(pk=id)
         return render(request, "admin/editar-cliente.html", {"cliente": cliente, "error": ""})
-    nombre = parametro(request, "nombre")
-    apellido = parametro(request, "apellido")
-    correo = parametro(request, "correo")
-    contrasena = parametro(request, "contrasena", requerido=False)
+    nombre = parametro(request, "nombre").strip()
+    apellido = parametro(request, "apellido").strip()
+    correo = parametro(request, "correo").strip()
+    contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
     cliente = Cliente.objects.get(pk=id)
+    error = validar_persona([nombre, apellido], correo, contrasena, contrasena_obligatoria=False)
+    if error is None and igual_mysql(Cliente.objects.exclude(pk=cliente.pk), "correo", correo).exists():
+        error = "Ya existe un cliente con ese correo."
+    if error:
+        return render(request, "admin/editar-cliente.html", {"cliente": cliente, "error": error})
 
-    def error(mensaje):
-        return render(request, "admin/editar-cliente.html", {"cliente": cliente, "error": mensaje})
-
-    if any(c.strip() == "" for c in (nombre, apellido, correo)):
-        return error("Todos los campos obligatorios deben estar completos.")
-    if not correo_valido(correo):
-        return error("El correo no tiene un formato válido.")
-    existente = igual_mysql(Cliente.objects.all(), "correo", correo.strip()).first()
-    if existente is not None and existente.id_cliente != id:
-        return error("Ya existe un cliente con ese correo.")
-    nueva_contrasena = contrasena is not None and contrasena.strip() != ""
-    if nueva_contrasena and len(contrasena) < 6:
-        return error("La contraseña debe tener al menos 6 caracteres.")
-
-    cliente.nombre_cliente = nombre.strip()
-    cliente.apellido_cliente = apellido.strip()
-    cliente.correo = correo.strip()
-    if nueva_contrasena:
+    cliente.nombre_cliente = nombre
+    cliente.apellido_cliente = apellido
+    cliente.correo = correo
+    if contrasena is not None:
         cliente.contrasena = cifrar_contrasena(contrasena)
     cliente.save()
     return redirect("/admin")
@@ -178,9 +165,6 @@ def cliente_editar(request, id):
 # ---------------------------------------------------------------------------
 # Vehículos
 # ---------------------------------------------------------------------------
-FORMATO_PLACA = r"[A-Z]{3}-?[0-9]{3}"
-
-
 def opcional(texto: str | None) -> str | None:
     """"campo == null || campo.isBlank() ? null : campo.trim()" de Java."""
     return None if texto is None or texto.strip() == "" else texto.strip()
@@ -204,37 +188,33 @@ def vehiculo_nuevo(request):
 @admin_requerido
 @metodos("POST")
 def vehiculo_crear(request):
-    """Equivale a AdminController.crearVehiculo (desde el panel no se crean sensores por defecto)."""
+    """Equivale a AdminController.crearVehiculo, con las validaciones comunes (lote A).
+    Desde el panel no se crean sensores por defecto."""
     cliente_id = parametro(request, "clienteId", int)
-    nombre_vehiculo = parametro(request, "nombreVehiculo")
-    marca = parametro(request, "marca")
-    modelo = parametro(request, "modelo", requerido=False)
-    color = parametro(request, "color")
-    placa = parametro(request, "placa")
+    nombre_vehiculo = parametro(request, "nombreVehiculo").strip()
+    marca = parametro(request, "marca").strip()
+    modelo = (parametro(request, "modelo", requerido=False) or "").strip()
+    color = parametro(request, "color").strip()
+    placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
     elm_mac = parametro(request, "elmMac", requerido=False)
 
-    def error(mensaje):
-        return render(request, "admin/crear-vehiculo.html", {"clientes": list(Cliente.objects.all()), "error": mensaje})
-
-    placa_normalizada = placa.upper().strip()
-    if any(c.strip() == "" for c in (nombre_vehiculo, marca, color, placa_normalizada)):
-        return error("Todos los campos obligatorios deben estar completos.")
-    if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
-        return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
-    if igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).exists():
-        return error("Ya existe un vehículo con esa placa.")
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+    if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
+        error = PLACA_DUPLICADA
     cliente = Cliente.objects.filter(pk=cliente_id).first()
-    if cliente is None:
-        return error("Selecciona un cliente válido.")
+    if error is None and cliente is None:
+        error = "Selecciona un cliente válido."
+    if error:
+        return render(request, "admin/crear-vehiculo.html", {"clientes": list(Cliente.objects.all()), "error": error})
     Vehiculo.objects.create(
         cliente=cliente,
-        nombre_vehiculo=nombre_vehiculo.strip(),
-        marca=marca.strip(),
-        modelo=opcional(modelo),
-        color=color.strip(),
-        placa=placa_normalizada,
-        tipo_placa=tipo_placa,
+        nombre_vehiculo=nombre_vehiculo,
+        marca=marca,
+        modelo=normalizar_modelo(modelo),
+        color=color,
+        placa=placa,
+        tipo_placa=normalizar_tipo_placa(tipo_placa),
         elm_mac=opcional(elm_mac),
     )
     return redirect("/admin")
@@ -243,40 +223,36 @@ def vehiculo_crear(request):
 @admin_requerido
 @metodos("GET", "POST")
 def vehiculo_editar(request, id):
-    """Equivale a AdminController.showEditarVehiculo / editarVehiculo."""
+    """Equivale a AdminController.showEditarVehiculo / editarVehiculo, con las validaciones comunes (lote A).
+    Un modelo vacío conserva el actual."""
     if request.method != "POST":
         vehiculo = Vehiculo.objects.get(pk=id)
         return render(request, "admin/editar-vehiculo.html",
                       {"vehiculo": vehiculo, "clientes": list(Cliente.objects.all()), "error": ""})
     cliente_id = parametro(request, "clienteId", int, requerido=False)
-    nombre_vehiculo = parametro(request, "nombreVehiculo")
-    marca = parametro(request, "marca")
-    modelo = parametro(request, "modelo", requerido=False)
-    color = parametro(request, "color")
-    placa = parametro(request, "placa")
+    nombre_vehiculo = parametro(request, "nombreVehiculo").strip()
+    marca = parametro(request, "marca").strip()
+    modelo = opcional(parametro(request, "modelo", requerido=False))
+    color = parametro(request, "color").strip()
+    placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
     elm_mac = parametro(request, "elmMac", requerido=False)
     vehiculo = Vehiculo.objects.get(pk=id)
 
-    def error(mensaje):
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa, modelo_obligatorio=False)
+    if error is None and igual_mysql(Vehiculo.objects.exclude(pk=vehiculo.pk), "placa", placa).exists():
+        error = PLACA_DUPLICADA
+    if error:
         return render(request, "admin/editar-vehiculo.html",
-                      {"vehiculo": vehiculo, "clientes": list(Cliente.objects.all()), "error": mensaje})
+                      {"vehiculo": vehiculo, "clientes": list(Cliente.objects.all()), "error": error})
 
-    placa_normalizada = placa.upper().strip()
-    if any(c.strip() == "" for c in (nombre_vehiculo, marca, color, placa_normalizada)):
-        return error("Todos los campos obligatorios deben estar completos.")
-    if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
-        return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
-    existente = igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).first()
-    if existente is not None and existente.id_vehiculo != id:
-        return error("Ya existe un vehículo con esa placa.")
-
-    vehiculo.nombre_vehiculo = nombre_vehiculo.strip()
-    vehiculo.marca = marca.strip()
-    vehiculo.modelo = vehiculo.modelo if opcional(modelo) is None else modelo.strip()
-    vehiculo.color = color.strip()
-    vehiculo.placa = placa_normalizada
-    vehiculo.tipo_placa = tipo_placa
+    vehiculo.nombre_vehiculo = nombre_vehiculo
+    vehiculo.marca = marca
+    if modelo is not None:
+        vehiculo.modelo = normalizar_modelo(modelo)
+    vehiculo.color = color
+    vehiculo.placa = placa
+    vehiculo.tipo_placa = normalizar_tipo_placa(tipo_placa)
     vehiculo.elm_mac = opcional(elm_mac)
     if cliente_id is not None and vehiculo.cliente_id != cliente_id:
         nuevo_cliente = Cliente.objects.filter(pk=cliente_id).first()
@@ -389,26 +365,19 @@ def usuario_nuevo(request):
 @admin_requerido
 @metodos("POST")
 def usuario_crear(request):
-    """Equivale a AdminController.crearUsuario (el rol es texto libre, S2)."""
-    nombre = parametro(request, "nombre")
-    correo = parametro(request, "correo")
+    """Equivale a AdminController.crearUsuario (el rol es texto libre, S2), con las validaciones comunes (lote A)."""
+    nombre = parametro(request, "nombre").strip()
+    correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
     rol = parametro(request, "rol")
-
-    def error(mensaje):
-        return render(request, "admin/crear-usuario.html", {"error": mensaje})
-
-    if any(c.strip() == "" for c in (nombre, correo, contrasena)):
-        return error("Todos los campos son obligatorios.")
-    if not correo_valido(correo):
-        return error("El correo no tiene un formato válido.")
-    if len(contrasena) < 6:
-        return error("La contraseña debe tener al menos 6 caracteres.")
-    if igual_mysql(Usuario.objects.all(), "correo", correo.strip()).exists():
-        return error("Ya existe un usuario con ese correo.")
+    error = validar_persona([nombre], correo, contrasena)
+    if error is None and igual_mysql(Usuario.objects.all(), "correo", correo).exists():
+        error = "Ya existe un usuario con ese correo."
+    if error:
+        return render(request, "admin/crear-usuario.html", {"error": error})
     Usuario.objects.create(
-        nombre=nombre.strip(),
-        correo=correo.strip(),
+        nombre=nombre,
+        correo=correo,
         contrasena=cifrar_contrasena(contrasena),
         rol="ADMIN" if rol.strip() == "" else rol.strip(),
     )
@@ -418,33 +387,24 @@ def usuario_crear(request):
 @admin_requerido
 @metodos("GET", "POST")
 def usuario_editar(request, id):
-    """Equivale a AdminController.showEditarUsuario / editarUsuario."""
+    """Equivale a AdminController.showEditarUsuario / editarUsuario, con las validaciones comunes (lote A)."""
     if request.method != "POST":
         usuario = Usuario.objects.get(pk=id)
         return render(request, "admin/editar-usuario.html", {"usuario": usuario, "error": ""})
-    nombre = parametro(request, "nombre")
-    correo = parametro(request, "correo")
-    contrasena = parametro(request, "contrasena", requerido=False)
+    nombre = parametro(request, "nombre").strip()
+    correo = parametro(request, "correo").strip()
+    contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
     rol = parametro(request, "rol")
     usuario = Usuario.objects.get(pk=id)
+    error = validar_persona([nombre], correo, contrasena, contrasena_obligatoria=False)
+    if error is None and igual_mysql(Usuario.objects.exclude(pk=usuario.pk), "correo", correo).exists():
+        error = "Ya existe un usuario con ese correo."
+    if error:
+        return render(request, "admin/editar-usuario.html", {"usuario": usuario, "error": error})
 
-    def error(mensaje):
-        return render(request, "admin/editar-usuario.html", {"usuario": usuario, "error": mensaje})
-
-    if any(c.strip() == "" for c in (nombre, correo)):
-        return error("Todos los campos obligatorios deben estar completos.")
-    if not correo_valido(correo):
-        return error("El correo no tiene un formato válido.")
-    existente = igual_mysql(Usuario.objects.all(), "correo", correo.strip()).first()
-    if existente is not None and existente.id_usuario != id:
-        return error("Ya existe un usuario con ese correo.")
-    nueva_contrasena = contrasena is not None and contrasena.strip() != ""
-    if nueva_contrasena and len(contrasena) < 6:
-        return error("La contraseña debe tener al menos 6 caracteres.")
-
-    usuario.nombre = nombre.strip()
-    usuario.correo = correo.strip()
-    if nueva_contrasena:
+    usuario.nombre = nombre
+    usuario.correo = correo
+    if contrasena is not None:
         usuario.contrasena = cifrar_contrasena(contrasena)
     usuario.rol = usuario.rol if rol.strip() == "" else rol.strip()
     usuario.save()

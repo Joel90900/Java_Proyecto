@@ -50,13 +50,15 @@ input:focus,select:focus{outline:2px solid var(--red);border-color:transparent}
     </label>
     <label>Nombre del vehículo<input type="text" name="nombreVehiculo" value="{{ vehiculo.nombre_vehiculo|default_if_none:"" }}" required></label>
     <label>Marca<input type="text" name="marca" value="{{ vehiculo.marca|default_if_none:"" }}" required></label>
-    <label>Modelo<input type="text" name="modelo" value="{{ vehiculo.modelo|default_if_none:"" }}" placeholder="Ej.: 2020"></label>
+    <label>Modelo<input type="number" name="modelo" value="{{ vehiculo.modelo|default_if_none:""|slice:":4" }}" placeholder="Ej.: 2020" min="1990" max="2030"></label>
     <label>Color<input type="text" name="color" value="{{ vehiculo.color|default_if_none:"" }}" required></label>
     <label>Placa<input type="text" name="placa" value="{{ vehiculo.placa|default_if_none:"" }}" required></label>
     <label>Tipo de placa
       <select name="tipoPlaca" required>
         <option value="particular" {% if vehiculo.tipo_placa == 'particular' %}selected{% endif %}>Particular</option>
         <option value="publico" {% if vehiculo.tipo_placa == 'publico' %}selected{% endif %}>Público</option>
+        <option value="oficial" {% if vehiculo.tipo_placa == 'oficial' %}selected{% endif %}>Oficial</option>
+        <option value="diplomatico" {% if vehiculo.tipo_placa == 'diplomatico' %}selected{% endif %}>Diplomático</option>
       </select>
     </label>
     <label>MAC del ELM327 (opcional)

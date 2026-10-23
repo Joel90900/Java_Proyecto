@@ -51,13 +51,15 @@ input:focus,select:focus{outline:2px solid var(--red);border-color:transparent}
     </label>
     <label>Nombre del vehículo<input type="text" name="nombreVehiculo" placeholder="Ej.: Auto principal" required></label>
     <label>Marca<input type="text" name="marca" placeholder="Toyota" required></label>
-    <label>Modelo<input type="text" name="modelo" placeholder="Ej.: 2020"></label>
+    <label>Modelo<input type="number" name="modelo" placeholder="Ej.: 2020" min="1990" max="2030" required></label>
     <label>Color<input type="text" name="color" placeholder="Rojo" required></label>
     <label>Placa<input type="text" name="placa" placeholder="ABC123 o ABC-123" required></label>
     <label>Tipo de placa
       <select name="tipoPlaca" required>
         <option value="particular">Particular</option>
         <option value="publico">Público</option>
+        <option value="oficial">Oficial</option>
+        <option value="diplomatico">Diplomático</option>
       </select>
     </label>
     <label>MAC del ELM327 (opcional)
