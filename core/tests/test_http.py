@@ -29,6 +29,13 @@ class ParametroTests(SimpleTestCase):
                 parametro(rf.get(url), "n", tipo)
 
 
+class DecimalesNoFinitosTests(SimpleTestCase):  # revisión final #5
+    def test_rechaza_infinito_y_nan(self):
+        for valor in ("inf", "-inf", "Infinity", "-Infinity", "nan", "NaN"):
+            with self.assertRaises(BadRequest, msg=valor):
+                parametro(rf.get("/x", {"v": valor}), "v", float)
+
+
 class MetodosTests(SimpleTestCase):
     def test_rechaza_metodo_no_permitido_con_405(self):
         vista = metodos("GET")(lambda request: HttpResponse("ok"))

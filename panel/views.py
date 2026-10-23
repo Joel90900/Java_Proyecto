@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 
 from core.auth import (admin_requerido, cerrar_sesion_admin, cifrar_contrasena, iniciar_sesion_admin,
                        verificar_contrasena)
+from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Usuario, Vehiculo
 from core.patrones.singleton import UmbralesReporte
@@ -20,7 +21,7 @@ def login(request):
         return render(request, "admin/login.html")
     correo = request.POST.get("correo", "")
     contrasena = request.POST.get("contrasena", "")
-    usuario = Usuario.objects.filter(correo__iexact=correo).first()
+    usuario = igual_mysql(Usuario.objects.all(), "correo", correo).first()
     if usuario is None or not verificar_contrasena(contrasena, usuario.contrasena):
         return redirect("/admin/login?error")
     iniciar_sesion_admin(request, usuario)
@@ -116,7 +117,7 @@ def cliente_crear(request):
         return error("El correo no tiene un formato válido.")
     if len(contrasena) < 6:
         return error("La contraseña debe tener al menos 6 caracteres.")
-    if Cliente.objects.filter(correo__iexact=correo.strip()).exists():
+    if igual_mysql(Cliente.objects.all(), "correo", correo.strip()).exists():
         return error("Ya existe un cliente con ese correo.")
     Cliente.objects.create(
         nombre_cliente=nombre.strip(),
@@ -158,7 +159,7 @@ def cliente_editar(request, id):
         return error("Todos los campos obligatorios deben estar completos.")
     if not correo_valido(correo):
         return error("El correo no tiene un formato válido.")
-    existente = Cliente.objects.filter(correo__iexact=correo.strip()).first()
+    existente = igual_mysql(Cliente.objects.all(), "correo", correo.strip()).first()
     if existente is not None and existente.id_cliente != id:
         return error("Ya existe un cliente con ese correo.")
     nueva_contrasena = contrasena is not None and contrasena.strip() != ""
@@ -221,7 +222,7 @@ def vehiculo_crear(request):
         return error("Todos los campos obligatorios deben estar completos.")
     if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
         return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
-    if Vehiculo.objects.filter(placa__iexact=placa_normalizada).exists():
+    if igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).exists():
         return error("Ya existe un vehículo con esa placa.")
     cliente = Cliente.objects.filter(pk=cliente_id).first()
     if cliente is None:
@@ -266,7 +267,7 @@ def vehiculo_editar(request, id):
         return error("Todos los campos obligatorios deben estar completos.")
     if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
         return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
-    existente = Vehiculo.objects.filter(placa__iexact=placa_normalizada).first()
+    existente = igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).first()
     if existente is not None and existente.id_vehiculo != id:
         return error("Ya existe un vehículo con esa placa.")
 
@@ -403,7 +404,7 @@ def usuario_crear(request):
         return error("El correo no tiene un formato válido.")
     if len(contrasena) < 6:
         return error("La contraseña debe tener al menos 6 caracteres.")
-    if Usuario.objects.filter(correo__iexact=correo.strip()).exists():
+    if igual_mysql(Usuario.objects.all(), "correo", correo.strip()).exists():
         return error("Ya existe un usuario con ese correo.")
     Usuario.objects.create(
         nombre=nombre.strip(),
@@ -434,7 +435,7 @@ def usuario_editar(request, id):
         return error("Todos los campos obligatorios deben estar completos.")
     if not correo_valido(correo):
         return error("El correo no tiene un formato válido.")
-    existente = Usuario.objects.filter(correo__iexact=correo.strip()).first()
+    existente = igual_mysql(Usuario.objects.all(), "correo", correo.strip()).first()
     if existente is not None and existente.id_usuario != id:
         return error("Ya existe un usuario con ese correo.")
     nueva_contrasena = contrasena is not None and contrasena.strip() != ""

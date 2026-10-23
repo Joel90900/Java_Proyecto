@@ -4,6 +4,7 @@ Lectura de parámetros y control de métodos HTTP con la semántica de Spring MV
 parametro() equivale a @RequestParam: lee el formulario y la query string, y
 responde 400 (BadRequest) si falta un parámetro obligatorio o un número no es válido.
 """
+import math
 from functools import wraps
 
 from django.core.exceptions import BadRequest
@@ -44,13 +45,19 @@ def parametro(request, nombre: str, tipo: type = str, requerido: bool = True):
 
 
 def _decimal_java(valor: str) -> float | None:
-    """Double.parseDouble: admite espacios alrededor, pero no guiones bajos."""
+    """
+    Double.parseDouble: admite espacios alrededor, pero no guiones bajos.
+
+    Infinito y NaN se rechazan: MySQL nunca los guardaba y en el JSON de la API
+    producirían respuestas que la app Android no puede leer.
+    """
     if "_" in valor:
         return None
     try:
-        return float(valor)
+        numero = float(valor)
     except ValueError:
         return None
+    return numero if math.isfinite(numero) else None
 
 
 def metodos(*permitidos: str):

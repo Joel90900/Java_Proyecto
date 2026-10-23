@@ -28,6 +28,8 @@ relativas a `referencia/proyecto-java/src/main/java/com/example/sensores_vsc/`.
 | 16 | `GET /api/obd2/vehiculo/{id}/elm` siempre responde `"conectado": false`. | `api/views.py: elm` | `controller/Obd2Controller.java:184-210` |
 | 17 | `@EnableScheduling` estaba activado pero no había tareas programadas; no se migró. | — | `SensoresVscApplication.java` |
 | 18 | Un sensor con `Nivel` NULL (posible en datos importados) provoca un error 500 en estos lugares: el dashboard del cliente, `/api/cliente/{correo}`, `/api/bluetooth/simular` y los CSV de sensores y fallas. | `web/views.py: dashboard`; `api/views.py: datos_cliente_json, simular`; `reportes/exportar.py: csv_reporte` | `DashboardController.java:43-45`; `ApiController.java:107-109, 225`; `AdminController.java:542, 553` |
+| 19 | **Afecta a los datos reales:** el cliente no puede editar un vehículo importado con placa en minúsculas (`emt262`, `432fsfdf`, `gmf322`). Al guardar sin cambiar la placa recibe "Ya existe un vehículo con esa placa.". El motivo: compara la placa en mayúsculas con la guardada en minúsculas y luego la encuentra a sí misma. **Solución sin tocar código:** un administrador corrige la placa desde el panel (que la guarda en mayúsculas). | `web/views.py: vehiculo_editar` | `controller/VehiculoController.java:138-144` (con la intercalación de MySQL) |
+| 20 | **Afecta a los datos reales:** al editar un vehículo importado con tipo de placa `Particular` o `Público`, el desplegable no preselecciona nada, así que al guardar se escribe `particular` sin avisar. | `templates/paginas/editar-vehiculo.html`, `templates/admin/editar-vehiculo.html` | las mismas plantillas Thymeleaf |
 
 ## Diferencias conocidas de la migración (no son errores de Java)
 

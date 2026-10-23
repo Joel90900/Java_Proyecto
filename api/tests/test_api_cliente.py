@@ -47,6 +47,21 @@ class AuthApiTests(TestCase):
         self.assertIn("contraseña".encode(), r.content)
 
 
+class EspaciosFinalesComoMysqlTests(TestCase):  # revisión final #1
+    def test_registro_con_espacio_final_detecta_el_duplicado(self):
+        crear_cliente()
+        r = self.client.post("/api/auth/register", {"nombre": "a", "apellido": "b", "correo": "joel@test.com ",
+                                                    "contrasena": "x"})
+        self.assertEqual(r.json(), {"ok": False, "mensaje": "El correo ya está registrado."})
+        self.assertEqual(Cliente.objects.count(), 1)
+
+    def test_login_y_datos_con_espacio_final(self):
+        crear_cliente()
+        r = self.client.post("/api/auth/login", {"correo": "joel@test.com ", "contrasena": CLAVE})
+        self.assertTrue(r.json()["ok"])
+        self.assertTrue(self.client.get("/api/cliente/joel@test.com%20").json()["ok"])
+
+
 class DatosClienteTests(TestCase):
     def test_estructura_completa(self):
         c = crear_cliente()

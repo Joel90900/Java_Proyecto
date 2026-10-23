@@ -5,6 +5,7 @@ from django.shortcuts import redirect, render
 
 from core.auth import (cerrar_sesion_cliente, cifrar_contrasena, cliente_requerido, iniciar_sesion_cliente,
                        verificar_contrasena)
+from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Vehiculo
 from core.sensores_defecto import crear_sensores_por_defecto
@@ -32,7 +33,7 @@ def login(request):
         return render(request, "paginas/login.html")
     correo = request.POST.get("correo", "")
     contrasena = request.POST.get("contrasena", "")
-    cliente = Cliente.objects.filter(correo__iexact=correo).first()
+    cliente = igual_mysql(Cliente.objects.all(), "correo", correo).first()
     if cliente is None or cliente.estado == "bloqueado" or not verificar_contrasena(contrasena, cliente.contrasena):
         return redirect("/login?error")
     iniciar_sesion_cliente(request, cliente)
@@ -54,7 +55,7 @@ def register(request):
     apellido = parametro(request, "apellido")
     correo = parametro(request, "correo")
     contrasena = parametro(request, "contrasena")
-    if Cliente.objects.filter(correo__iexact=correo).exists():
+    if igual_mysql(Cliente.objects.all(), "correo", correo).exists():
         return render(request, "paginas/register.html", {"error": "El correo ya está registrado."})
     Cliente.objects.create(
         nombre_cliente=nombre,
@@ -130,7 +131,7 @@ def vehiculo_crear(request):
         return error("El año debe ser un número válido.")
     if anio < 1990 or anio > 2030:
         return error("El año debe estar entre 1990 y 2030.")
-    if Vehiculo.objects.filter(placa__iexact=placa.upper()).exists():
+    if igual_mysql(Vehiculo.objects.all(), "placa", placa.upper()).exists():
         return error("Ya existe un vehículo registrado con esa placa.")
     if not re.fullmatch(FORMATO_PLACA, placa.upper()):
         return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
@@ -171,7 +172,7 @@ def vehiculo_editar(request, id):
 
     if any(c.strip() == "" for c in (nombre_vehiculo, marca, color, placa)):
         return error("Todos los campos son obligatorios.")
-    if placa.upper() != vehiculo.placa and Vehiculo.objects.filter(placa__iexact=placa.upper()).exists():
+    if placa.upper() != vehiculo.placa and igual_mysql(Vehiculo.objects.all(), "placa", placa.upper()).exists():
         return error("Ya existe un vehículo con esa placa.")
 
     vehiculo.nombre_vehiculo = nombre_vehiculo.strip()

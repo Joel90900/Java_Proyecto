@@ -38,6 +38,11 @@ class LecturasTests(TestCase):
         self.assertEqual(self.enviar(valor="80").json()["estado"], "OK")
         self.assertEqual(Alerta.objects.count(), 1)
 
+    def test_valor_infinito_no_se_guarda(self):  # revisión final #5
+        r = Client(raise_request_exception=False).post("/api/obd2/lecturas", {
+            "idVehiculo": self.v.pk, "nombreSensor": "x", "tipoSensor": "TEMP", "valor": "Infinity"})
+        self.assertEqual((r.status_code, Lectura.objects.count()), (400, 0))
+
     def test_errores(self):
         self.assertEqual(self.enviar(idVehiculo=9999).json(), {"ok": False, "mensaje": "Vehículo no encontrado."})
         r = Client(raise_request_exception=False).post("/api/obd2/lecturas", {

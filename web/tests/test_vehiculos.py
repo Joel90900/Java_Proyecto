@@ -54,6 +54,18 @@ class CrearVehiculoTests(Base):
         self.assertEqual(Vehiculo.objects.count(), 1)
 
 
+class PlacaConEspacioFinalTests(Base):  # revisión final #1
+    def test_placa_con_espacio_final_es_duplicado_como_en_mysql(self):
+        crear_vehiculo(self.cliente, placa="ABC123")
+        r = self.client.post("/vehiculos/crear", {**DATOS, "placa": "abc123 "})
+        self.assertContains(r, "Ya existe un vehículo registrado con esa placa.")
+
+    def test_login_web_con_espacio_final(self):
+        self.client.post("/logout")
+        r = self.client.post("/login", {"correo": "joel@test.com ", "contrasena": "clave123"})
+        self.assertRedirects(r, "/dashboard", fetch_redirect_response=False)
+
+
 class EditarEliminarTests(Base):
     def setUp(self):
         super().setUp()

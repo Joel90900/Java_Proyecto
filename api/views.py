@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.obd2 import calcular_nivel, crear_alerta_si_corresponde, estado_por_nivel, unidad_de, valor_simulado
 from core.auth import cifrar_contrasena, cliente_requerido, verificar_contrasena
+from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
 from core.sensores_defecto import crear_sensores_por_defecto
@@ -52,7 +53,7 @@ def anio_vehiculo(modelo: str | None) -> str:
 
 
 def buscar_cliente(correo: str) -> Cliente | None:
-    return Cliente.objects.filter(correo__iexact=correo).first()
+    return igual_mysql(Cliente.objects.all(), "correo", correo).first()
 
 
 # ---------------------------------------------------------------------------
@@ -167,7 +168,7 @@ def crear_vehiculo(request):
     if anio < 1990 or anio > 2030:
         return error("El año debe estar entre 1990 y 2030.")
     placa_normalizada = placa.upper().strip()
-    if Vehiculo.objects.filter(placa__iexact=placa_normalizada).exists():
+    if igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).exists():
         return error("Ya existe un vehículo registrado con esa placa.")
     if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
         return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")

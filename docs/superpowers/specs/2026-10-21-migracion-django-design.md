@@ -148,7 +148,7 @@ Tablas y columnas con **los mismos nombres que en MySQL** (`db_table` y `db_colu
 
 **Orden:** toda consulta que en Java era `findAll()`, `findBy…` o una colección lazy se ordena explícitamente por la clave primaria ascendente, que es el orden en que la devolvía MySQL. Las que en Java tienen `OrderBy…Desc` mantienen ese orden.
 
-**Comparaciones de texto en la base de datos:** las tablas MySQL usan la intercalación `utf8mb4_general_ci`, que no distingue mayúsculas. Por eso, las búsquedas por igualdad que Java delegaba a la base de datos (`findByCorreo` en clientes y usuarios, `findByPlaca`) usan `__iexact` en Django. Así `Joel@…` sigue encontrando a `joel@…` y la detección de placas duplicadas se comporta igual. Las comparaciones que Java hace en memoria (`equals`, `equalsIgnoreCase`) se traducen literalmente.
+**Comparaciones de texto en la base de datos:** las tablas MySQL usan la intercalación `utf8mb4_general_ci`, que no distingue mayúsculas. Por eso, las búsquedas por igualdad que Java delegaba a la base de datos (`findByCorreo` en clientes y usuarios, `findByPlaca`) usan `core.consultas.igual_mysql`, que compara `UPPER(RTRIM(campo))`. Esa intercalación también es PAD SPACE: ignora los espacios al final, y esto se añadió tras la revisión final. Así `Joel@… ` sigue encontrando a `joel@…` y la detección de correos y placas duplicadas se comporta igual. Las comparaciones que Java hace en memoria (`equals`, `equalsIgnoreCase`) se traducen literalmente.
 
 **Fechas:** `TIME_ZONE = "America/Bogota"` y `USE_TZ = False`, que equivale a `LocalDateTime`. Las fechas nuevas se guardan sin microsegundos (`datetime.now().replace(microsecond=0)`), igual que el `timestamp` de MySQL.
 
