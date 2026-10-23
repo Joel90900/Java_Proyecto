@@ -5,7 +5,6 @@ Es pública y sin CSRF (F1): la app no maneja sesión y se identifica con el
 correo. Las respuestas conservan las claves y su orden del JSON de Java.
 """
 import random
-import re
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,10 +14,11 @@ from core.auth import cifrar_contrasena, cliente_requerido, verificar_contrasena
 from core.consultas import igual_mysql
 from core.http import metodos, parametro
 from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
+from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.sensores_defecto import crear_sensores_por_defecto
-from core.utilidades import ahora, entero_java, fecha_java
+from core.utilidades import ahora, fecha_java
+from core.validaciones import validar_persona, validar_vehiculo
 
-FORMATO_PLACA = r"[A-Z]{3}-?[0-9]{3}"
 
 
 def respuesta_json(datos: dict) -> JsonResponse:
@@ -62,17 +62,20 @@ def buscar_cliente(correo: str) -> Cliente | None:
 @csrf_exempt
 @metodos("POST")
 def registrar(request):
-    """Equivale a ApiController.registrar."""
-    nombre = parametro(request, "nombre")
-    apellido = parametro(request, "apellido")
-    correo = parametro(request, "correo")
+    """Equivale a ApiController.registrar, con las validaciones comunes (lote A)."""
+    nombre = parametro(request, "nombre").strip()
+    apellido = parametro(request, "apellido").strip()
+    correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-    if buscar_cliente(correo) is not None:
-        return respuesta_json({"ok": False, "mensaje": "El correo ya está registrado."})
+    error = validar_persona([nombre, apellido], correo, contrasena)
+    if error is None and buscar_cliente(correo) is not None:
+        error = "El correo ya está registrado."
+    if error:
+        return respuesta_json({"ok": False, "mensaje": error})
     cliente = Cliente.objects.create(
-        nombre_cliente=nombre.strip(),
-        apellido_cliente=apellido.strip(),
-        correo=correo.strip(),
+        nombre_cliente=nombre,
+        apellido_cliente=apellido,
+        correo=correo,
         contrasena=cifrar_contrasena(contrasena),
         estado="activo",
     )
@@ -145,41 +148,30 @@ def datos_cliente(request, correo):
 @csrf_exempt
 @metodos("POST")
 def crear_vehiculo(request):
-    """Equivale a ApiController.crearVehiculo."""
+    """Equivale a ApiController.crearVehiculo, con las validaciones comunes (lote A)."""
     correo = parametro(request, "correo")
-    nombre_vehiculo = parametro(request, "nombreVehiculo")
-    marca = parametro(request, "marca")
-    modelo = parametro(request, "modelo")
-    color = parametro(request, "color")
-    placa = parametro(request, "placa")
+    nombre_vehiculo = parametro(request, "nombreVehiculo").strip()
+    marca = parametro(request, "marca").strip()
+    modelo = parametro(request, "modelo").strip()
+    color = parametro(request, "color").strip()
+    placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
 
-    def error(mensaje):
-        return respuesta_json({"ok": False, "mensaje": mensaje})
-
     cliente = buscar_cliente(correo)
-    if cliente is None:
-        return error("Cliente no encontrado.")
-    if any(c.strip() == "" for c in (nombre_vehiculo, marca, modelo, color, placa, tipo_placa)):
-        return error("Todos los campos son obligatorios.")
-    anio = entero_java(modelo.strip())
-    if anio is None:
-        return error("El año debe ser un número válido.")
-    if anio < 1990 or anio > 2030:
-        return error("El año debe estar entre 1990 y 2030.")
-    placa_normalizada = placa.upper().strip()
-    if igual_mysql(Vehiculo.objects.all(), "placa", placa_normalizada).exists():
-        return error("Ya existe un vehículo registrado con esa placa.")
-    if not re.fullmatch(FORMATO_PLACA, placa_normalizada):
-        return error("Formato de placa inválido. Ejemplo: ABC123 o ABC-123.")
+    error = "Cliente no encontrado." if cliente is None else validar_vehiculo(
+        nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+    if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
+        error = "Ya existe un vehículo registrado con esa placa."
+    if error:
+        return respuesta_json({"ok": False, "mensaje": error})
 
     vehiculo = Vehiculo.objects.create(
-        nombre_vehiculo=nombre_vehiculo.strip(),
-        marca=marca.strip(),
-        modelo=modelo.strip() + "-01-01",
-        color=color.strip(),
-        placa=placa_normalizada,
-        tipo_placa=tipo_placa,
+        nombre_vehiculo=nombre_vehiculo,
+        marca=marca,
+        modelo=normalizar_modelo(modelo),
+        color=color,
+        placa=placa,
+        tipo_placa=normalizar_tipo_placa(tipo_placa),
         cliente=cliente,
     )
     crear_sensores_por_defecto(vehiculo)

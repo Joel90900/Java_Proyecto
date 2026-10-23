@@ -14,7 +14,7 @@ def info(c):
 class AuthApiTests(TestCase):
     def test_registro(self):
         r = self.client.post("/api/auth/register", {"nombre": " Ana ", "apellido": " Paz ", "correo": " ana@test.com ",
-                                                    "contrasena": "x1"})
+                                                    "contrasena": "secreto1"})
         ana = Cliente.objects.get(correo="ana@test.com")
         self.assertEqual(r.json(), {"ok": True, "mensaje": "Cuenta creada correctamente.", "cliente": info(ana)})
         self.assertEqual(list(r.json()), ["ok", "mensaje", "cliente"])
@@ -24,7 +24,7 @@ class AuthApiTests(TestCase):
     def test_registro_duplicado_y_parametro_faltante(self):
         crear_cliente()
         r = self.client.post("/api/auth/register", {"nombre": "a", "apellido": "b", "correo": "joel@test.com",
-                                                    "contrasena": "x"})
+                                                    "contrasena": "secreto"})
         self.assertEqual(r.json(), {"ok": False, "mensaje": "El correo ya está registrado."})
         sin_clave = Client(raise_request_exception=False).post("/api/auth/register",
                                                                {"nombre": "a", "apellido": "b", "correo": "z@z.co"})
@@ -51,7 +51,7 @@ class EspaciosFinalesComoMysqlTests(TestCase):  # revisión final #1
     def test_registro_con_espacio_final_detecta_el_duplicado(self):
         crear_cliente()
         r = self.client.post("/api/auth/register", {"nombre": "a", "apellido": "b", "correo": "joel@test.com ",
-                                                    "contrasena": "x"})
+                                                    "contrasena": "secreto"})
         self.assertEqual(r.json(), {"ok": False, "mensaje": "El correo ya está registrado."})
         self.assertEqual(Cliente.objects.count(), 1)
 
@@ -121,3 +121,21 @@ class SimularApiTests(TestCase):
         self.assertEqual(Sensor.objects.get(pk=alto.pk).nivel, 100)
         self.assertEqual(self.client.post("/api/bluetooth/simular", {"correo": "x@x.co"}).json(),
                          {"ok": False, "mensaje": "Cliente no encontrado."})
+
+
+class ApiValidacionesTests(TestCase):  # lote A
+    def test_registro_valida_correo_y_contrasena(self):
+        for datos, mensaje in (({"correo": "abc", "contrasena": "secreto"}, "El correo no tiene un formato válido."),
+                               ({"correo": "a@b.co", "contrasena": "12"}, "La contraseña debe tener al menos 6 caracteres.")):
+            r = self.client.post("/api/auth/register", {"nombre": "A", "apellido": "B", **datos})
+            self.assertEqual(r.json(), {"ok": False, "mensaje": mensaje})
+
+    def test_tipo_placa_texto_libre_de_la_app(self):  # Review Focus 1
+        crear_cliente()
+        base = {"correo": "joel@test.com", "nombreVehiculo": "Onix", "marca": "Chevrolet", "modelo": "2020", "color": "Negro"}
+        for i, tipo in enumerate(("Público", " PARTICULAR ", "oficial")):
+            r = self.client.post("/api/vehiculos/crear", {**base, "placa": f"ABC12{i}", "tipoPlaca": tipo})
+            self.assertTrue(r.json()["ok"], tipo)
+        self.assertEqual(sorted(Vehiculo.objects.values_list("tipo_placa", flat=True)), ["oficial", "particular", "publico"])
+        r = self.client.post("/api/vehiculos/crear", {**base, "placa": "ABC999", "tipoPlaca": "taxi"})
+        self.assertEqual(r.json(), {"ok": False, "mensaje": "Selecciona un tipo de placa válido."})
