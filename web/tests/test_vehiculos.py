@@ -38,7 +38,7 @@ class CrearVehiculoTests(Base):
     def test_crea_con_los_cuatro_sensores(self):
         self.assertRedirects(self.client.post("/vehiculos/crear", DATOS), "/vehiculos", fetch_redirect_response=False)
         v = Vehiculo.objects.get()
-        self.assertEqual((v.placa, v.modelo, v.cliente), ("ABC-123", "2020-01-01", self.cliente))
+        self.assertEqual((v.placa, v.modelo, v.cliente), ("ABC123", "2020-01-01", self.cliente))
         self.assertEqual([(s.tipo_sensor, s.nombre_sensor, s.tipo_dano, s.nivel) for s in v.sensores.all()], [
             ("MAF", "Sensor de Flujo de Masa de Aire (MAF)", "Falla en flujo de aire", 0),
             ("O2", "Sensor de Oxígeno (O2)", "Falla en mezcla", 0),
@@ -63,6 +63,11 @@ class PlacaConEspacioFinalTests(Base):  # revisión final #1
         crear_vehiculo(self.cliente, placa="ABC123")
         r = self.client.post("/vehiculos/crear", {**DATOS, "placa": "abc123 "})
         self.assertContains(r, "Ya existe un vehículo registrado con esa placa.")
+
+    def test_placa_con_guion_es_duplicado(self):  # revisión final: se guarda sin guion
+        crear_vehiculo(self.cliente, placa="ABC123")
+        self.assertContains(self.client.post("/vehiculos/crear", {**DATOS, "placa": "abc-123"}),
+                            "Ya existe un vehículo registrado con esa placa.")
 
     def test_login_web_con_espacio_final(self):
         self.client.post("/logout")

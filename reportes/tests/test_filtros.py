@@ -38,6 +38,9 @@ class FiltrosTests(TestCase):
         self.assertEqual([f("emt", None, None, None), f("PAZ", None, None, None), f(None, "BLOQUEADO", None, None),
                           f(None, None, "kia", None)], [[self.joel], [self.ana], [self.ana], [self.ana]])
 
+    def test_buscar_placa_con_guion(self):  # revisión final: las placas se guardan sin guion
+        self.assertEqual(filtrar_clientes(self.clientes, "emt-262", None, None, None), [self.joel])
+
     def test_tipo_placa_sin_tildes(self):  # F5 + Review Focus 1
         self.assertEqual(filtrar_clientes(self.clientes, None, None, None, "publico"), [self.joel])
         self.assertEqual(filtrar_clientes(self.clientes, None, None, None, "PARTICULAR"), [self.ana])

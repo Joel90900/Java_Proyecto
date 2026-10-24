@@ -5,7 +5,8 @@ from core.normalizacion import TIPOS_PLACA, normalizar_modelo, normalizar_placa,
 
 class NormalizacionTests(SimpleTestCase):
     def test_placa(self):
-        self.assertEqual([normalizar_placa(p) for p in (" emt262 ", "ABC-123", None)], ["EMT262", "ABC-123", None])
+        self.assertEqual([normalizar_placa(p) for p in (" emt262 ", " abc-123 ", "AB-C123", None)],
+                         ["EMT262", "ABC123", "AB-C123", None])  # el guion se quita solo en la forma ABC-123
 
     def test_tipo_placa(self):
         casos = {"Público": "publico", " PARTICULAR ": "particular", "oficial": "oficial", "Diplomático": "diplomatico",

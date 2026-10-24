@@ -20,7 +20,7 @@ class VehiculosAdminTests(Base):
                              fetch_redirect_response=False)
         v = Vehiculo.objects.get()
         self.assertEqual((v.nombre_vehiculo, v.modelo, v.placa, v.elm_mac, v.sensores.count()),
-                         ("Onix", "2020-01-01", "ABC-123", None, 0))
+                         ("Onix", "2020-01-01", "ABC123", None, 0))
 
     def test_validaciones_en_orden(self):
         crear_vehiculo(self.cliente, placa="DUP111")

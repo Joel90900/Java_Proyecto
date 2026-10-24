@@ -1,9 +1,11 @@
+import io
+from contextlib import redirect_stdout
 from importlib import import_module
 
 from django.apps import apps as django_apps
 from django.test import TestCase
 
-from core.models import Sensor
+from core.models import Sensor, Vehiculo
 from core.tests.fabricas import crear_cliente, crear_usuario, crear_vehiculo
 
 normalizar_datos = import_module("core.migrations.0002_normalizar_datos").normalizar_datos
@@ -15,6 +17,21 @@ class NormalizarDatosTests(TestCase):
         normalizar_datos(django_apps, None)
         v.refresh_from_db()
         self.assertEqual((v.placa, v.tipo_placa, v.modelo), ("EMT262", "publico", "2020-01-01"))
+
+    def test_quita_el_guion_y_avisa_las_placas_que_chocan(self):  # revisión final
+        c = crear_cliente()
+        con_guion = crear_vehiculo(c, placa="XYZ-999")
+        choque = [crear_vehiculo(c, placa=p) for p in ("ABC-123", "abc123")]
+        salida = io.StringIO()
+        with redirect_stdout(salida):
+            normalizar_datos(django_apps, None)
+        self.assertEqual(Vehiculo.objects.get(pk=con_guion.pk).placa, "XYZ999")
+        self.assertEqual([Vehiculo.objects.get(pk=v.pk).placa for v in choque], ["ABC-123", "abc123"])
+        self.assertIn("ABC123", salida.getvalue())
+
+    def test_la_0004_vuelve_a_normalizar(self):  # bases que ya aplicaron la 0002
+        operacion = import_module("core.migrations.0004_placas_sin_guion").Migration.operations[0]
+        self.assertIs(operacion.code, normalizar_datos)
 
     def test_tipo_desconocido_se_conserva(self):  # no inventa datos
         v = crear_vehiculo(crear_cliente(), tipo_placa="Taxi")

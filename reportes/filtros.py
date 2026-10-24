@@ -53,7 +53,10 @@ def _coincide(q: str, cliente, vehiculos) -> bool:
     texto = f"{_nr(cliente.nombre_cliente)} {_nr(cliente.apellido_cliente)} {_nr(cliente.correo)}".lower()
     if ql in texto:
         return True
-    return any(ql in _nr(v.placa).lower() or ql in _nr(v.nombre_vehiculo).lower() for v in vehiculos)
+    # Las placas se guardan sin guion: buscar "emt-262" también encuentra "EMT262".
+    sin_guion = ql.replace("-", "")
+    return any(ql in _nr(v.placa).lower() or sin_guion in _nr(v.placa).lower() or ql in _nr(v.nombre_vehiculo).lower()
+               for v in vehiculos)
 
 
 def filtrar_clientes(clientes, q, estado_cliente, marca, tipo_placa) -> list:

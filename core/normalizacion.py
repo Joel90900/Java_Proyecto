@@ -17,8 +17,11 @@ def sin_tildes(texto: str | None) -> str:
 
 
 def normalizar_placa(placa: str | None) -> str | None:
-    """Sin espacios alrededor y en mayúsculas."""
-    return None if placa is None else placa.strip().upper()
+    """Sin espacios alrededor, en mayúsculas y sin el guion de la forma ABC-123: "abc-123" se guarda "ABC123"."""
+    if placa is None:
+        return None
+    placa = placa.strip().upper()
+    return placa.replace("-", "") if re.fullmatch(r"[A-Z]{3}-[0-9]{3}", placa) else placa
 
 
 def normalizar_tipo_placa(tipo: str | None) -> str | None:
