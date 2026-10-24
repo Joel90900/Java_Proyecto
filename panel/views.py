@@ -1,5 +1,5 @@
 """Vistas del panel de administración (equivalen a AdminController)."""
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from core.auth import (admin_requerido, cerrar_sesion_admin, cifrar_contrasena, iniciar_sesion_admin,
                        verificar_contrasena)
@@ -89,7 +89,7 @@ def contrasena_nueva(contrasena: str | None) -> str | None:
 @metodos("POST")
 def cliente_estado(request, id):
     """Equivale a AdminController.cambiarEstado."""
-    cliente = Cliente.objects.get(pk=id)
+    cliente = get_object_or_404(Cliente, pk=id)
     cliente.estado = "bloqueado" if cliente.estado == "activo" else "activo"
     cliente.save()
     return redirect("/admin")
@@ -140,13 +140,13 @@ def cliente_eliminar(request, id):
 def cliente_editar(request, id):
     """Equivale a AdminController.showEditarCliente / editarCliente, con las validaciones comunes (lote A)."""
     if request.method != "POST":
-        cliente = Cliente.objects.get(pk=id)
+        cliente = get_object_or_404(Cliente, pk=id)
         return render(request, "admin/editar-cliente.html", {"cliente": cliente, "error": ""})
     nombre = parametro(request, "nombre").strip()
     apellido = parametro(request, "apellido").strip()
     correo = parametro(request, "correo").strip()
     contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
-    cliente = Cliente.objects.get(pk=id)
+    cliente = get_object_or_404(Cliente, pk=id)
     error = validar_persona([nombre, apellido], correo, contrasena, contrasena_obligatoria=False)
     if error is None and igual_mysql(Cliente.objects.exclude(pk=cliente.pk), "correo", correo).exists():
         error = "Ya existe un cliente con ese correo."
@@ -226,7 +226,7 @@ def vehiculo_editar(request, id):
     """Equivale a AdminController.showEditarVehiculo / editarVehiculo, con las validaciones comunes (lote A).
     Un modelo vacío conserva el actual."""
     if request.method != "POST":
-        vehiculo = Vehiculo.objects.get(pk=id)
+        vehiculo = get_object_or_404(Vehiculo, pk=id)
         return render(request, "admin/editar-vehiculo.html",
                       {"vehiculo": vehiculo, "clientes": list(Cliente.objects.all()), "error": ""})
     cliente_id = parametro(request, "clienteId", int, requerido=False)
@@ -237,7 +237,7 @@ def vehiculo_editar(request, id):
     placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
     elm_mac = parametro(request, "elmMac", requerido=False)
-    vehiculo = Vehiculo.objects.get(pk=id)
+    vehiculo = get_object_or_404(Vehiculo, pk=id)
 
     error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa, modelo_obligatorio=False)
     if error is None and igual_mysql(Vehiculo.objects.exclude(pk=vehiculo.pk), "placa", placa).exists():
@@ -329,7 +329,7 @@ def sensor_crear(request):
 def sensor_editar(request, id):
     """Equivale a AdminController.showEditarSensor / editarSensor."""
     if request.method != "POST":
-        sensor = Sensor.objects.get(pk=id)
+        sensor = get_object_or_404(Sensor, pk=id)
         return render(request, "admin/editar-sensor.html",
                       {"vehiculos": list(Vehiculo.objects.all()), "sensor": sensor, "error": ""})
     vehiculo_id = parametro(request, "vehiculoId", int)
@@ -337,7 +337,7 @@ def sensor_editar(request, id):
     tipo_sensor = parametro(request, "tipoSensor")
     nivel = parametro(request, "nivel", int)
     tipo_dano = parametro(request, "tipoDano", requerido=False)
-    sensor = Sensor.objects.get(pk=id)
+    sensor = get_object_or_404(Sensor, pk=id)
     mensaje, vehiculo = _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id)
     if mensaje:
         return render(request, "admin/editar-sensor.html",
@@ -389,13 +389,13 @@ def usuario_crear(request):
 def usuario_editar(request, id):
     """Equivale a AdminController.showEditarUsuario / editarUsuario, con las validaciones comunes (lote A)."""
     if request.method != "POST":
-        usuario = Usuario.objects.get(pk=id)
+        usuario = get_object_or_404(Usuario, pk=id)
         return render(request, "admin/editar-usuario.html", {"usuario": usuario, "error": ""})
     nombre = parametro(request, "nombre").strip()
     correo = parametro(request, "correo").strip()
     contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
     rol = parametro(request, "rol")
-    usuario = Usuario.objects.get(pk=id)
+    usuario = get_object_or_404(Usuario, pk=id)
     error = validar_persona([nombre], correo, contrasena, contrasena_obligatoria=False)
     if error is None and igual_mysql(Usuario.objects.exclude(pk=usuario.pk), "correo", correo).exists():
         error = "Ya existe un usuario con ese correo."
@@ -416,7 +416,7 @@ def usuario_editar(request, id):
 def usuario_eliminar(request, id):
     """Equivale a AdminController.eliminarUsuario: no se borra a sí mismo ni al último administrador."""
     total_usuarios = Usuario.objects.count()
-    usuario = Usuario.objects.get(pk=id)
+    usuario = get_object_or_404(Usuario, pk=id)
     if request.admin_correo.lower() == usuario.correo.lower() or total_usuarios <= 1:
         return redirect("/admin")
     usuario.delete()

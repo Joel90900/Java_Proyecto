@@ -1,5 +1,5 @@
 """Vistas de la web del cliente (equivalen a AuthController, DashboardController y VehiculoController)."""
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from core.auth import (cerrar_sesion_cliente, cifrar_contrasena, cliente_requerido, iniciar_sesion_cliente,
                        verificar_contrasena)
@@ -153,7 +153,7 @@ def vehiculo_editar(request, id):
         placa = normalizar_placa(parametro(request, "placa"))
         tipo_placa = parametro(request, "tipoPlaca")
     cliente = request.cliente
-    vehiculo = Vehiculo.objects.get(pk=id)
+    vehiculo = get_object_or_404(Vehiculo, pk=id)
     if vehiculo.cliente_id != cliente.id_cliente:
         return redirect("/vehiculos")
     if request.method != "POST":
@@ -179,7 +179,7 @@ def vehiculo_editar(request, id):
 @metodos("POST")
 def vehiculo_eliminar(request, id):
     """Equivale a VehiculoController.eliminar. Los sensores se borran en cascada y las lecturas se conservan (F3)."""
-    vehiculo = Vehiculo.objects.get(pk=id)
+    vehiculo = get_object_or_404(Vehiculo, pk=id)
     if vehiculo.cliente_id == request.cliente.id_cliente:
         vehiculo.delete()
     return redirect("/vehiculos")

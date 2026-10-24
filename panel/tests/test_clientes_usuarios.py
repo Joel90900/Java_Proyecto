@@ -1,4 +1,4 @@
-from django.test import Client, TestCase
+from django.test import TestCase
 
 from core.models import Cliente, Lectura, Usuario, Vehiculo
 from core.tests.fabricas import (crear_cliente, crear_lectura, crear_sensor, crear_usuario, crear_vehiculo, login_admin,
@@ -84,10 +84,12 @@ class ClientesTests(Base):
         self.assertRedirects(self.client.post(f"/admin/cliente/{c.pk}/eliminar"), "/admin", fetch_redirect_response=False)
         self.assertEqual((Cliente.objects.count(), Vehiculo.objects.count(), Lectura.objects.count()), (0, 0, 1))
 
-    def test_id_inexistente_da_500(self):
-        c = Client(raise_request_exception=False)
-        login_admin(c, self.admin)
-        self.assertEqual(c.get("/admin/cliente/9999/editar").status_code, 500)
+    def test_id_inexistente_da_404(self):  # lote A
+        for url in ("/admin/cliente/9999/editar", "/admin/vehiculo/9999/editar", "/admin/sensor/9999/editar",
+                    "/admin/usuario/9999/editar"):
+            self.assertContains(self.client.get(url), "NO ENCONTRADA", status_code=404, msg_prefix=url)
+        for url in ("/admin/cliente/9999/estado", "/admin/usuario/9999/eliminar"):
+            self.assertEqual(self.client.post(url).status_code, 404, url)
 
 
 class UsuariosTests(Base):

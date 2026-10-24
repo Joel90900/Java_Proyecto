@@ -52,3 +52,8 @@ def error_500(request):
 def pagina_error(request):
     """GET /error: como en Java, muestra la página de error 500 con estado HTTP 200."""
     return render_error(request, 500, http_status=200)
+
+
+def error_csrf(request, reason=""):
+    """Fallo de CSRF (formulario caducado o enviado desde otro sitio): la página 403 propia, no la de Django."""
+    return render_error(request, 403)

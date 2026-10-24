@@ -24,6 +24,10 @@ class DashboardTests(Base):
         self.assertEqual([r.context[k] for k in ("totalSensores", "sensoresOk", "advertencias", "fallas")], [5, 2, 2, 1])
         self.assertRegex(r.content.decode(), r"(lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d{2} \w+ \d{4}")
 
+    def test_id_inexistente_web_da_404(self):  # lote A
+        self.assertEqual(self.client.get("/vehiculos/9999/editar").status_code, 404)
+        self.assertEqual(self.client.post("/vehiculos/9999/eliminar").status_code, 404)
+
     def test_sin_sesion(self):
         self.client.post("/logout")
         for url in ("/dashboard", "/vehiculos", "/sensores", "/vehiculos/crear"):

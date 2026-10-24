@@ -2,7 +2,7 @@
 import time
 
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from core.auth import admin_requerido
 from core.http import metodos
@@ -122,7 +122,7 @@ def reporte_general(request):
 @metodos("GET")
 def reporte_cliente(request, cliente_id):
     """Equivale a ReporteController.reporteCliente (informe imprimible por cliente)."""
-    cliente = Cliente.objects.get(pk=cliente_id)
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
     contexto = {
         "cliente": cliente,
         "vehiculos": list(Vehiculo.objects.filter(cliente_id=cliente_id)),
@@ -170,5 +170,5 @@ def exportar_pdf(request):
 @metodos("GET")
 def exportar_pdf_cliente(request, id):
     """Equivale a AdminController.exportarPdfCliente."""
-    cliente = Cliente.objects.get(pk=id)
+    cliente = get_object_or_404(Cliente, pk=id)
     return _descarga(pdf_cliente(cliente), "application/pdf", f"reporte-{cliente.nombre_cliente.lower()}.pdf")

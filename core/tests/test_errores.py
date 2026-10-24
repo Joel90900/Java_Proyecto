@@ -14,6 +14,11 @@ class PaginasDeErrorTests(TestCase):
         self.assertContains(r, "DEL SERVIDOR")
         self.assertContains(r, "Código: 500")
 
+    def test_csrf_fallido_muestra_error_html(self):  # lote A
+        r = Client(enforce_csrf_checks=True).post("/login", {"correo": "x@y.co", "contrasena": "z"})
+        self.assertContains(r, "ACCESO", status_code=403)
+        self.assertContains(r, "Código: 403", status_code=403)
+
     def test_handlers_400_y_500(self):
         req = RequestFactory().get("/x")
         self.assertContains(errores.error_400(req, Exception()), "Bad Request", status_code=400)

@@ -6,6 +6,7 @@ Las decisiones de fidelidad con el proyecto Java están en
 docs/superpowers/specs/2026-10-21-migracion-django-design.md.
 """
 import os
+import warnings
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -83,6 +84,10 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_USE_FINDERS = True
+# staticfiles/ solo existe tras collectstatic; con WHITENOISE_USE_FINDERS no hace falta en desarrollo.
+warnings.filterwarnings("ignore", message="No directory at", module="whitenoise.base")
+
+CSRF_FAILURE_VIEW = "core.errores.error_csrf"
 
 # Sesiones: 30 minutos de inactividad y cookie de sesión del navegador, como Spring/Tomcat.
 SESSION_COOKIE_AGE = 1800

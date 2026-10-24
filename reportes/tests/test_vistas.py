@@ -33,9 +33,8 @@ class VistasReportesTests(TestCase):
         self.assertEqual(len(r.context["alertas"]), 2)
         self.assertTrue(r.context["reporteId"].startswith("RPT-"))
         self.assertContains(self.client.get(f"/admin/reporte-cliente-pdf/{self.joel.pk}"), "EMT262")
-        c = Client(raise_request_exception=False)
-        login_admin(c, crear_usuario(correo="b@autosen.com"))
-        self.assertEqual(c.get("/admin/reporte-cliente-pdf/9999").status_code, 500)
+        self.assertEqual(self.client.get("/admin/reporte-cliente-pdf/9999").status_code, 404)  # lote A
+        self.assertEqual(self.client.get("/admin/reportes/cliente/9999/pdf").status_code, 404)
 
     def test_requiere_admin(self):
         self.assertRedirects(Client().get("/admin/reportes"), "/admin/login", fetch_redirect_response=False)
