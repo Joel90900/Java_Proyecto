@@ -128,3 +128,14 @@ Cada función devuelve `None` si todo está bien, o el **mensaje de error** que 
 ## 7. Fuera de alcance
 
 Los lotes B, C y D, y cambios en la app Android.
+
+
+## Decisiones tras la revisión final
+
+La revisión de toda la rama (Opus y Codex) encontró cinco cosas que se corrigieron con su prueba:
+
+- **Placas sin guion** (decisión del usuario): `normalizar_placa` quita el guion de la forma `ABC-123`, así que "ABC-123" y "ABC123" son la misma placa. La migración `0004_placas_sin_guion` vuelve a aplicar la normalización en las bases que ya tenían la 0002. Si dos placas chocarían, se dejan como están y se avisa en la consola. La búsqueda de reportes encuentra la placa aunque se escriba con guion.
+- **Sensores de los reportes filtrados** (decisión del usuario): con un filtro de cliente activo (búsqueda, estado, marca o tipo de placa), la tabla de sensores y sus contadores solo cuentan los sensores de los vehículos de esos clientes. La página, el Excel y el PDF usan la misma selección (F5).
+- **Textos más largos que su columna** y **contraseñas de más de 72 bytes** muestran un mensaje en lugar de un error 500, en la web, el panel y la API.
+- **Editar sin cambiar la placa** no busca duplicados, para que dos vehículos que quedaron con la misma placa al normalizar se puedan seguir editando.
+- **El aviso de WhiteNoise** se filtra sin `module=`: WhiteNoise avisa con `stacklevel=3` y el aviso se atribuye a quien carga el middleware.

@@ -29,12 +29,14 @@ relativas a `src/main/java/com/example/sensores_vsc/` del proyecto Spring Boot (
 |---|---|---|---|
 | 7 | La API no comprueba que el correo o el ID pertenezcan a quien llama, porque no hay token. Cualquiera que conozca un correo puede consultar o modificar sus datos. | `api/views.py` (todas las vistas) | `controller/ApiController.java`, `controller/Obd2Controller.java` |
 | 8 | Cuando el correo no existe, el login responde sin calcular bcrypt, así que el tiempo de respuesta revela qué correos están registrados. En la API, además, "Tu cuenta está bloqueada" solo aparece con la contraseña correcta, pero confirma que la cuenta existe. | `web/views.py: login`, `panel/views.py: login`, `api/views.py: login` | `formLogin` de Spring Security; `controller/ApiController.java` |
+| 9 | Si a la API le falta un parámetro obligatorio, responde un 400 en HTML en lugar del JSON `{ok, mensaje}`, así que la app Android no puede leer el error. | `core/http.py: parametro`; `api/views.py` | `@RequestParam` de Spring |
+| 10 | Los CSV no neutralizan las fórmulas: un nombre que empiece por `=`, `+`, `-` o `@` se ejecuta como fórmula al abrir el archivo en Excel. | `reportes/exportar.py: csv_reporte` | `controller/AdminController.java:523-577` |
 
 ## Lote D: rendimiento
 
 | # | Comportamiento | Dónde está en Python | Dónde estaba en Java |
 |---|---|---|---|
-| 9 | Consultas N+1: por cada cliente se cuenta `vehiculos` y por cada sensor se cargan su vehículo y su cliente, con una consulta por fila. Con pocos datos no se nota; con cientos de filas, el dashboard del panel, los reportes y las exportaciones se vuelven lentos. Se resuelve con `select_related`, `prefetch_related` y `annotate(Count(...))`. | `templates/admin/dashboard.html`, `templates/admin/reportes.html`, `reportes/exportar.py`, `reportes/views.py: vehiculos_con_fallas` | relaciones `LAZY` de JPA en los mismos lugares |
+| 11 | Consultas N+1: por cada cliente se cuenta `vehiculos` y por cada sensor se cargan su vehículo y su cliente, con una consulta por fila. Con pocos datos no se nota; con cientos de filas, el dashboard del panel, los reportes y las exportaciones se vuelven lentos. Se resuelve con `select_related`, `prefetch_related` y `annotate(Count(...))`. | `templates/admin/dashboard.html`, `templates/admin/reportes.html`, `reportes/exportar.py`, `reportes/filtros.py` | relaciones `LAZY` de JPA en los mismos lugares |
 
 ## Diferencias conocidas de la migración (no son errores de Java)
 
