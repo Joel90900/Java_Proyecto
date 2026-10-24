@@ -20,9 +20,9 @@ from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Tabl
 
 from core.models import Cliente, Sensor, Vehiculo
 from core.patrones.fabrica import EstadoSensorStrategyFactory, TipoEstado
-from core.patrones.singleton import UmbralesReporte
 from core.utilidades import ahora, texto_java
-from reportes.filtros import filtrar_clientes, filtrar_sensores, normalizar_rango, nz_nivel
+from reportes.filtros import (filtrar_clientes, filtrar_sensores, limitar_a_clientes, normalizar_rango, nz_nivel,
+                              vehiculos_con_falla, vehiculos_de)
 
 STRATEGY_REPORTE = EstadoSensorStrategyFactory.crear(TipoEstado.REPORTE)
 
@@ -110,17 +110,17 @@ def excel_reporte(clientes, sensores) -> bytes:
         _fila(hoja, _nr(s.nombre_sensor), _nr(s.tipo_sensor), _nr(v.nombre_vehiculo) if v else "-", cliente,
               nz_nivel(s), STRATEGY_REPORTE.clasificar(s.nivel), _nr(s.tipo_dano))
 
+    # Las dos últimas hojas cuentan lo mismo que /admin/reportes-filtrado (revisión final del lote A).
     hoja = libro.create_sheet("Vehículos con fallas")
     _fila(hoja, "Vehículo", "Placa", "Cliente")
-    for v in Vehiculo.objects.all():
-        if any(UmbralesReporte.INSTANCIA.es_falla(nz_nivel(s)) for s in v.sensores.all()):
-            cliente = _nombre_completo(v.cliente) if v.cliente is not None else "-"
-            _fila(hoja, _nr(v.nombre_vehiculo), _nr(v.placa), cliente)
+    for v in vehiculos_con_falla(vehiculos_de(Vehiculo.objects.all(), clientes), sensores):
+        _fila(hoja, _nr(v.nombre_vehiculo), _nr(v.placa), _nombre_completo(v.cliente))
 
     hoja = libro.create_sheet("Clientes bloqueados")
     _fila(hoja, "Nombre", "Correo", "Vehículos")
-    for c in Cliente.objects.filter(estado="bloqueado"):
-        _fila(hoja, _nombre_completo(c), _nr(c.correo), c.vehiculos.count())
+    for c in clientes:
+        if c.estado == "bloqueado":
+            _fila(hoja, _nombre_completo(c), _nr(c.correo), c.vehiculos.count())
 
     salida = BytesIO()
     libro.save(salida)
@@ -137,7 +137,7 @@ def datos_pdf_general(params: dict) -> tuple[list, list]:
                                 params.get("marca"), params.get("tipoPlaca"))
     sensores = filtrar_sensores(list(Sensor.objects.all()), params.get("estadoSensor"), params.get("tipoSensor"),
                                 nivel_min, nivel_max)
-    return clientes, sensores
+    return clientes, limitar_a_clientes(sensores, clientes, params)
 
 
 def _estilo(nombre: str, fuente: str, tamano: float, color) -> ParagraphStyle:

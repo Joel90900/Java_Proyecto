@@ -11,8 +11,8 @@ from core.normalizacion import TIPOS_PLACA
 from core.patrones.singleton import UmbralesReporte
 from core.utilidades import ahora, redondear_java
 from reportes.exportar import csv_reporte, datos_pdf_general, excel_reporte, pdf_cliente, pdf_general
-from reportes.filtros import (STRATEGY_FILTRO, filtrar_clientes, filtrar_sensores, nz_nivel, ordenar_sensores,
-                              parametros_filtro)
+from reportes.filtros import (STRATEGY_FILTRO, nz_nivel, ordenar_sensores, parametros_filtro, vehiculos_con_falla,
+                              vehiculos_de)
 
 TIPO_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -62,22 +62,16 @@ def reportes_filtrado(request):
     """Equivale a ReporteController.listaReportes (con el filtro de tipo de placa aplicado, F5)."""
     filtros = parametros_filtro(request)
     todos = list(Sensor.objects.all())
-    sensores = ordenar_sensores(
-        filtrar_sensores(todos, filtros["estadoSensor"], filtros["tipoSensor"], filtros["nivelMin"], filtros["nivelMax"]),
-        filtros["ordenarPor"])
-    todos_clientes = list(Cliente.objects.all())
-    clientes = filtrar_clientes(todos_clientes, filtros["q"], filtros["estadoCliente"], filtros["marca"],
-                                filtros["tipoPlaca"])
+    # Misma selección que el Excel y el PDF (F5); los totales cuentan solo lo filtrado (lote A).
+    clientes, seleccion = datos_pdf_general(filtros)
+    sensores = ordenar_sensores(seleccion, filtros["ordenarPor"])
     umbrales = UmbralesReporte.INSTANCIA
-    # Los totales se calculan sobre los clientes y sensores filtrados (lote A).
-    ids_clientes = {c.id_cliente for c in clientes}
-    vehiculos = [v for v in Vehiculo.objects.all() if v.cliente_id in ids_clientes]
-    con_falla = {s.vehiculo_id for s in sensores if umbrales.es_falla(nz_nivel(s))}
+    vehiculos = vehiculos_de(Vehiculo.objects.all(), clientes)
     contexto = {
         "clientes": clientes,
         "todosSensores": sensores,
         "clientesBloqueados": [c for c in clientes if c.estado == "bloqueado"],
-        "vehiculosConFallas": [v for v in vehiculos if v.id_vehiculo in con_falla],
+        "vehiculosConFallas": vehiculos_con_falla(vehiculos, sensores),
         "totalClientes": len(clientes),
         "totalVehiculos": len(vehiculos),
         "totalSensores": len(sensores),

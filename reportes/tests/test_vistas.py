@@ -46,7 +46,15 @@ class VistasReportesTests(TestCase):
         r = self.client.get("/admin/reportes-filtrado?tipoPlaca=publico&nivelMin=&nivelMax=")
         self.assertEqual((r.status_code, r.context["clientes"], r.context["nivelMin"]), (200, [self.joel], None))
         self.assertEqual(r.context["tiposSensor"], ["MAF", "O2", "ECT", "TEST"])
-        self.assertEqual(len(r.context["todosSensores"]), 4)
+        self.assertEqual(len(r.context["todosSensores"]), 2)  # solo los de Joel (revisión final)
+
+    def test_sensores_respetan_el_filtro_de_cliente(self):  # revisión final, decisión del usuario
+        r = self.client.get("/admin/reportes-filtrado?q=Joel")
+        self.assertEqual(sorted(s.nombre_sensor for s in r.context["todosSensores"]), ["Sensor MAF", "Sensor O2"])
+        self.assertEqual([r.context[k] for k in ("totalSensores", "totalFallas", "totalAdvertencias", "totalVehiculos")],
+                         [2, 0, 1, 1])
+        r = self.client.get("/admin/reportes-filtrado")
+        self.assertEqual([r.context[k] for k in ("totalSensores", "totalFallas", "totalVehiculos")], [4, 1, 2])
 
     def test_rango_invertido(self):
         r = self.client.get("/admin/reportes-filtrado?nivelMin=70&nivelMax=10")

@@ -7,6 +7,7 @@ así que los tres aplican exactamente los mismos criterios (F5).
 from core.http import parametro
 from core.normalizacion import sin_tildes
 from core.patrones.fabrica import EstadoSensorStrategyFactory, TipoEstado
+from core.patrones.singleton import UmbralesReporte
 
 STRATEGY_FILTRO = EstadoSensorStrategyFactory.crear(TipoEstado.FILTRO)
 
@@ -74,6 +75,29 @@ def filtrar_clientes(clientes, q, estado_cliente, marca, tipo_placa) -> list:
             continue
         resultado.append(c)
     return resultado
+
+
+FILTROS_DE_CLIENTE = ("q", "estadoCliente", "marca", "tipoPlaca")
+
+
+def limitar_a_clientes(sensores, clientes, filtros: dict) -> list:
+    """Con un filtro de cliente activo, solo los sensores de los vehículos de esos clientes, para que la
+    página, el Excel y el PDF cuenten lo mismo (revisión final del lote A). Sin él, todos."""
+    if not any(_con_valor(filtros.get(nombre)) for nombre in FILTROS_DE_CLIENTE):
+        return sensores
+    ids = {c.id_cliente for c in clientes}
+    return [s for s in sensores if s.vehiculo is not None and s.vehiculo.cliente_id in ids]
+
+
+def vehiculos_de(vehiculos, clientes) -> list:
+    ids = {c.id_cliente for c in clientes}
+    return [v for v in vehiculos if v.cliente_id in ids]
+
+
+def vehiculos_con_falla(vehiculos, sensores) -> list:
+    """Los vehículos con algún sensor (de los ya filtrados) en falla."""
+    con_falla = {s.vehiculo_id for s in sensores if UmbralesReporte.INSTANCIA.es_falla(nz_nivel(s))}
+    return [v for v in vehiculos if v.id_vehiculo in con_falla]
 
 
 def peso_estado(estado: str | None) -> int:

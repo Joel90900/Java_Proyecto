@@ -63,6 +63,10 @@ class ExportarTests(TestCase):
         self.assertEqual(filas("Sensores")[0], ["Sensor", "Tipo", "Vehículo", "Cliente", "Nivel", "Estado", "Diagnóstico"])
         self.assertEqual(filas("Sensores")[2],
                          ["Sensor O2", "O2", "Onix", "Joel Moncaleano", 50, "ADVERTENCIA", "Falla en flujo de aire"])
+        # Con el filtro "publico" solo cuenta Joel: sin vehículos en falla ni clientes bloqueados (revisión final).
+        self.assertEqual((len(filas("Sensores")), len(filas("Vehículos con fallas")), len(filas("Clientes bloqueados"))),
+                         (3, 1, 1))
+        wb = load_workbook(BytesIO(self.client.get("/admin/reportes/excel").content))
         self.assertEqual(filas("Vehículos con fallas")[1], ["Rio", "KIA111", "Ana Paz"])
         self.assertEqual(filas("Clientes bloqueados")[1], ["Ana Paz", "ana@test.com", 1])
 
@@ -70,6 +74,8 @@ class ExportarTests(TestCase):
         params = {"q": "paz", "estadoCliente": None, "marca": "Kia", "tipoPlaca": "particular", "estadoSensor": "falla",
                   "tipoSensor": None, "nivelMin": None, "nivelMax": None}
         self.assertEqual(datos_pdf_general(params), ([self.ana], [self.s3]))
+        solo_joel = {**params, "q": "joel", "marca": None, "tipoPlaca": None, "estadoSensor": None}
+        self.assertEqual(datos_pdf_general(solo_joel), ([self.joel], [self.s1, self.s2]))  # revisión final
 
     def test_pdfs(self):
         r = self.client.get("/admin/reportes/pdf?q=&nivelMin=")
