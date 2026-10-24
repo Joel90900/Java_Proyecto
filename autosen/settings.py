@@ -85,7 +85,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_USE_FINDERS = True
 # staticfiles/ solo existe tras collectstatic; con WHITENOISE_USE_FINDERS no hace falta en desarrollo.
-warnings.filterwarnings("ignore", message="No directory at", module="whitenoise.base")
+# Sin module=: WhiteNoise avisa con stacklevel=3 y el aviso se atribuye a quien carga el middleware.
+warnings.filterwarnings("ignore", message="No directory at", category=UserWarning)
 
 CSRF_FAILURE_VIEW = "core.errores.error_csrf"
 

@@ -1,9 +1,19 @@
+import warnings
+
 from django.conf import settings
+from django.core.handlers.wsgi import WSGIHandler
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 
 class ConfiguracionTests(TestCase):
+    def test_sin_aviso_de_whitenoise_al_cargar_la_app(self):  # revisión final
+        # WhiteNoise avisa con stacklevel=3, así que el aviso se atribuye a django.core.handlers.base.
+        with override_settings(STATIC_ROOT=settings.BASE_DIR / "no-existe"), \
+                warnings.catch_warnings(record=True) as avisos:
+            WSGIHandler()
+        self.assertEqual([str(a.message) for a in avisos if "No directory at" in str(a.message)], [])
+
     def test_base_de_datos_es_postgresql(self):
         self.assertEqual(connection.vendor, "postgresql")
 
