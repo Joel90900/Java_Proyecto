@@ -5,6 +5,18 @@ from core.tests.fabricas import crear_vehiculo
 from web.tests.test_vehiculos import DATOS, Base
 
 
+class TextosLargosWebTests(Base):  # revisión final: antes daban error 500
+    def test_textos_largos_muestran_mensaje(self):
+        r = self.client.post("/vehiculos/crear", {**DATOS, "color": "Gris oscuro metalizado mate"})
+        self.assertContains(r, "El campo color admite como máximo 25 caracteres.")
+        v = crear_vehiculo(self.cliente, placa="ABC123")
+        r = self.client.post(f"/vehiculos/{v.pk}/editar", {**DATOS, "placa": "ABC123", "marca": "x" * 51})
+        self.assertContains(r, "El campo marca admite como máximo 50 caracteres.")
+        self.client.post("/logout")
+        r = self.client.post("/register", {"nombre": "A", "apellido": "B", "correo": "a@b.co", "contrasena": "x" * 80})
+        self.assertContains(r, "La contraseña es demasiado larga.")
+
+
 class RegistroValidadoTests(TestCase):
     def test_recorta_y_valida(self):
         r = self.client.post("/register", {"nombre": " Ana ", "apellido": " Paz ", "correo": " ana@test.com ",

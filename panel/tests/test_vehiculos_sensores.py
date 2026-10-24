@@ -88,6 +88,27 @@ class FormulariosTests(Base):
         self.assertNotContains(self.client.get(f"/admin/vehiculo/{v.pk}/editar"), "None")
 
 
+class TextosLargosPanelTests(Base):  # revisión final: antes daban error 500
+    def test_textos_largos_muestran_mensaje(self):
+        casos = [("/admin/cliente/crear", {"nombre": "x" * 61, "apellido": "B", "correo": "a@b.co", "contrasena": "secreto"},
+                  "El campo nombre admite como máximo 60 caracteres."),
+                 ("/admin/usuario/crear", {"nombre": "A", "correo": "u@b.co", "contrasena": "secreto", "rol": "x" * 21},
+                  "El campo rol admite como máximo 20 caracteres."),
+                 ("/admin/vehiculo/crear", {"clienteId": self.cliente.pk, "nombreVehiculo": "Onix", "marca": "Kia",
+                                            "modelo": "2020", "color": "Negro", "placa": "ABC123",
+                                            "tipoPlaca": "particular", "elmMac": "x" * 51},
+                  "El campo MAC del ELM327 admite como máximo 50 caracteres."),
+                 ("/admin/sensor/crear", {"vehiculoId": crear_vehiculo(self.cliente, placa="ZZZ999").pk,
+                                          "nombreSensor": "Frenos", "tipoSensor": "x" * 51, "nivel": "10", "tipoDano": ""},
+                  "El campo tipo de sensor admite como máximo 50 caracteres.")]
+        for url, datos, mensaje in casos:
+            self.assertContains(self.client.post(url, datos), mensaje, msg_prefix=url)
+        c = self.cliente
+        r = self.client.post(f"/admin/cliente/{c.pk}/editar", {"nombre": "Joel", "apellido": "x" * 61,
+                                                               "correo": c.correo, "contrasena": ""})
+        self.assertContains(r, "El campo apellido admite como máximo 60 caracteres.")
+
+
 class VehiculoSinPlacaTests(Base):  # lote A
     def test_vehiculo_sin_placa_no_muestra_null(self):
         v = crear_vehiculo(self.cliente, placa=None)

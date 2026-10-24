@@ -130,6 +130,19 @@ class ApiValidacionesTests(TestCase):  # lote A
             r = self.client.post("/api/auth/register", {"nombre": "A", "apellido": "B", **datos})
             self.assertEqual(r.json(), {"ok": False, "mensaje": mensaje})
 
+    def test_textos_largos_responden_json(self):  # revisión final: antes daban 500 en HTML
+        r = self.client.post("/api/auth/register", {"nombre": "A", "apellido": "B", "correo": "a" * 62 + "@test.com",
+                                                    "contrasena": "secreto"})
+        self.assertEqual(r.json(), {"ok": False, "mensaje": "El campo correo admite como máximo 70 caracteres."})
+        r = self.client.post("/api/auth/register", {"nombre": "A", "apellido": "B", "correo": "a@b.co",
+                                                    "contrasena": "ñ" * 37})
+        self.assertEqual(r.json(), {"ok": False, "mensaje": "La contraseña es demasiado larga."})
+        crear_cliente()
+        r = self.client.post("/api/vehiculos/crear", {"correo": "joel@test.com", "nombreVehiculo": "x" * 61,
+                                                      "marca": "Kia", "modelo": "2020", "color": "Negro",
+                                                      "placa": "ABC123", "tipoPlaca": "particular"})
+        self.assertEqual(r.json(), {"ok": False, "mensaje": "El campo nombre del vehículo admite como máximo 60 caracteres."})
+
     def test_tipo_placa_texto_libre_de_la_app(self):  # Review Focus 1
         crear_cliente()
         base = {"correo": "joel@test.com", "nombreVehiculo": "Onix", "marca": "Chevrolet", "modelo": "2020", "color": "Negro"}

@@ -8,7 +8,7 @@ from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.sensores_defecto import crear_sensores_por_defecto
-from core.validaciones import validar_persona, validar_vehiculo
+from core.validaciones import validar_largos, validar_persona, validar_vehiculo
 
 PLACA_DUPLICADA = "Ya existe un vehículo registrado con esa placa."
 
@@ -54,7 +54,8 @@ def register(request):
     apellido = parametro(request, "apellido").strip()
     correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-    error = validar_persona([nombre, apellido], correo, contrasena)
+    error = validar_persona([nombre, apellido], correo, contrasena) or validar_largos(
+        Cliente, {"nombre_cliente": nombre, "apellido_cliente": apellido, "correo": correo})
     if error is None and igual_mysql(Cliente.objects.all(), "correo", correo).exists():
         error = "El correo ya está registrado."
     if error:
@@ -123,7 +124,8 @@ def vehiculo_crear(request):
     placa = normalizar_placa(parametro(request, "placa"))
     tipo_placa = parametro(request, "tipoPlaca")
 
-    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa) or validar_largos(
+        Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
     if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
         error = PLACA_DUPLICADA
     if error:
@@ -159,7 +161,9 @@ def vehiculo_editar(request, id):
     if request.method != "POST":
         return render(request, "paginas/editar-vehiculo.html", {"vehiculo": vehiculo, "cliente": cliente})
 
-    error = validar_vehiculo(nombre_vehiculo, marca, None, color, placa, tipo_placa, modelo_obligatorio=False)
+    error = validar_vehiculo(nombre_vehiculo, marca, None, color, placa, tipo_placa,
+                             modelo_obligatorio=False) or validar_largos(
+        Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
     otros = Vehiculo.objects.exclude(pk=vehiculo.pk)
     if error is None and igual_mysql(otros, "placa", placa).exists():
         error = PLACA_DUPLICADA

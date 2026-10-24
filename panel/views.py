@@ -8,7 +8,7 @@ from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Usuario, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.patrones.singleton import UmbralesReporte
-from core.validaciones import validar_persona, validar_vehiculo
+from core.validaciones import validar_largos, validar_persona, validar_vehiculo
 
 PLACA_DUPLICADA = "Ya existe un vehículo registrado con esa placa."
 
@@ -110,7 +110,8 @@ def cliente_crear(request):
     apellido = parametro(request, "apellido").strip()
     correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-    error = validar_persona([nombre, apellido], correo, contrasena)
+    error = validar_persona([nombre, apellido], correo, contrasena) or validar_largos(
+        Cliente, {"nombre_cliente": nombre, "apellido_cliente": apellido, "correo": correo})
     if error is None and igual_mysql(Cliente.objects.all(), "correo", correo).exists():
         error = "Ya existe un cliente con ese correo."
     if error:
@@ -147,7 +148,8 @@ def cliente_editar(request, id):
     correo = parametro(request, "correo").strip()
     contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
     cliente = get_object_or_404(Cliente, pk=id)
-    error = validar_persona([nombre, apellido], correo, contrasena, contrasena_obligatoria=False)
+    error = validar_persona([nombre, apellido], correo, contrasena, contrasena_obligatoria=False) or validar_largos(
+        Cliente, {"nombre_cliente": nombre, "apellido_cliente": apellido, "correo": correo})
     if error is None and igual_mysql(Cliente.objects.exclude(pk=cliente.pk), "correo", correo).exists():
         error = "Ya existe un cliente con ese correo."
     if error:
@@ -199,7 +201,8 @@ def vehiculo_crear(request):
     tipo_placa = parametro(request, "tipoPlaca")
     elm_mac = parametro(request, "elmMac", requerido=False)
 
-    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa) or validar_largos(
+        Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color, "elm_mac": opcional(elm_mac)})
     if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
         error = PLACA_DUPLICADA
     cliente = Cliente.objects.filter(pk=cliente_id).first()
@@ -239,7 +242,9 @@ def vehiculo_editar(request, id):
     elm_mac = parametro(request, "elmMac", requerido=False)
     vehiculo = get_object_or_404(Vehiculo, pk=id)
 
-    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa, modelo_obligatorio=False)
+    error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa,
+                             modelo_obligatorio=False) or validar_largos(
+        Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color, "elm_mac": opcional(elm_mac)})
     if error is None and igual_mysql(Vehiculo.objects.exclude(pk=vehiculo.pk), "placa", placa).exists():
         error = PLACA_DUPLICADA
     if error:
@@ -289,12 +294,16 @@ def sensor_nuevo(request):
     return render(request, "admin/crear-sensor.html", {"vehiculos": list(Vehiculo.objects.all()), "error": ""})
 
 
-def _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id):
+def _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id, tipo_dano):
     """Validaciones comunes de crearSensor/editarSensor: devuelve (mensaje de error, vehículo)."""
     if nombre_sensor.strip() == "" or tipo_sensor.strip() == "" or nivel is None:
         return "Todos los campos obligatorios deben estar completos.", None
     if nivel < 0 or nivel > 100:
         return "El nivel debe estar entre 0 y 100.", None
+    largo = validar_largos(Sensor, {"nombre_sensor": nombre_sensor.strip(), "tipo_sensor": tipo_sensor.strip(),
+                                    "tipo_dano": opcional(tipo_dano)})
+    if largo:
+        return largo, None
     vehiculo = Vehiculo.objects.filter(pk=vehiculo_id).first()
     if vehiculo is None:
         return "Selecciona un vehículo válido.", None
@@ -310,7 +319,7 @@ def sensor_crear(request):
     tipo_sensor = parametro(request, "tipoSensor")
     nivel = parametro(request, "nivel", int)
     tipo_dano = parametro(request, "tipoDano", requerido=False)
-    mensaje, vehiculo = _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id)
+    mensaje, vehiculo = _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id, tipo_dano)
     if mensaje:
         return render(request, "admin/crear-sensor.html", {"vehiculos": list(Vehiculo.objects.all()), "error": mensaje})
     Sensor.objects.create(
@@ -338,7 +347,7 @@ def sensor_editar(request, id):
     nivel = parametro(request, "nivel", int)
     tipo_dano = parametro(request, "tipoDano", requerido=False)
     sensor = get_object_or_404(Sensor, pk=id)
-    mensaje, vehiculo = _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id)
+    mensaje, vehiculo = _validar_sensor(nombre_sensor, tipo_sensor, nivel, vehiculo_id, tipo_dano)
     if mensaje:
         return render(request, "admin/editar-sensor.html",
                       {"vehiculos": list(Vehiculo.objects.all()), "sensor": sensor, "error": mensaje})
@@ -370,7 +379,8 @@ def usuario_crear(request):
     correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
     rol = parametro(request, "rol")
-    error = validar_persona([nombre], correo, contrasena)
+    error = validar_persona([nombre], correo, contrasena) or validar_largos(
+        Usuario, {"nombre": nombre, "correo": correo, "rol": rol.strip()})
     if error is None and igual_mysql(Usuario.objects.all(), "correo", correo).exists():
         error = "Ya existe un usuario con ese correo."
     if error:
@@ -396,7 +406,8 @@ def usuario_editar(request, id):
     contrasena = contrasena_nueva(parametro(request, "contrasena", requerido=False))
     rol = parametro(request, "rol")
     usuario = get_object_or_404(Usuario, pk=id)
-    error = validar_persona([nombre], correo, contrasena, contrasena_obligatoria=False)
+    error = validar_persona([nombre], correo, contrasena, contrasena_obligatoria=False) or validar_largos(
+        Usuario, {"nombre": nombre, "correo": correo, "rol": rol.strip()})
     if error is None and igual_mysql(Usuario.objects.exclude(pk=usuario.pk), "correo", correo).exists():
         error = "Ya existe un usuario con ese correo."
     if error:

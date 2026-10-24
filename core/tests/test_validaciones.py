@@ -1,6 +1,20 @@
 from django.test import SimpleTestCase
 
-from core.validaciones import validar_persona, validar_vehiculo
+from core.models import Cliente, Vehiculo
+from core.validaciones import validar_largos, validar_persona, validar_vehiculo
+
+
+class ValidarLargosTests(SimpleTestCase):  # revisión final
+    def test_largos_segun_la_columna(self):
+        self.assertEqual(validar_largos(Vehiculo, {"marca": "Kia", "color": "x" * 26}),
+                         "El campo color admite como máximo 25 caracteres.")
+        self.assertIsNone(validar_largos(Vehiculo, {"color": "x" * 25, "elm_mac": None}))
+        self.assertEqual(validar_largos(Cliente, {"nombre_cliente": "x" * 61}),
+                         "El campo nombre admite como máximo 60 caracteres.")
+
+    def test_contrasena_de_mas_de_72_bytes(self):
+        self.assertEqual(validar_persona(["A"], "a@b.co", "ñ" * 37), "La contraseña es demasiado larga.")
+        self.assertIsNone(validar_persona(["A"], "a@b.co", "x" * 72))
 
 
 class ValidarPersonaTests(SimpleTestCase):

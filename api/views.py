@@ -17,7 +17,7 @@ from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
 from core.sensores_defecto import crear_sensores_por_defecto
 from core.utilidades import ahora, fecha_java
-from core.validaciones import validar_persona, validar_vehiculo
+from core.validaciones import validar_largos, validar_persona, validar_vehiculo
 
 
 
@@ -67,7 +67,8 @@ def registrar(request):
     apellido = parametro(request, "apellido").strip()
     correo = parametro(request, "correo").strip()
     contrasena = parametro(request, "contrasena")
-    error = validar_persona([nombre, apellido], correo, contrasena)
+    error = validar_persona([nombre, apellido], correo, contrasena) or validar_largos(
+        Cliente, {"nombre_cliente": nombre, "apellido_cliente": apellido, "correo": correo})
     if error is None and buscar_cliente(correo) is not None:
         error = "El correo ya está registrado."
     if error:
@@ -159,7 +160,8 @@ def crear_vehiculo(request):
 
     cliente = buscar_cliente(correo)
     error = "Cliente no encontrado." if cliente is None else validar_vehiculo(
-        nombre_vehiculo, marca, modelo, color, placa, tipo_placa)
+        nombre_vehiculo, marca, modelo, color, placa, tipo_placa) or validar_largos(
+        Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
     if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
         error = "Ya existe un vehículo registrado con esa placa."
     if error:
