@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from core.consultas import igual_mysql
+from core.consultas import igual_mysql, placa_duplicada
 from core.models import Cliente, Vehiculo
 from core.tests.fabricas import crear_cliente, crear_vehiculo
 
@@ -23,3 +23,15 @@ class IgualMysqlTests(TestCase):
     def test_sirve_para_placas(self):
         v = crear_vehiculo(crear_cliente(), placa="emt262")
         self.assertEqual(igual_mysql(Vehiculo.objects.all(), "placa", "EMT262 ").first(), v)
+
+
+class PlacaDuplicadaTests(TestCase):  # revisión final
+    def test_al_editar_sin_cambiar_la_placa_no_compara(self):
+        c = crear_cliente()
+        propio = crear_vehiculo(c, placa="abc123")
+        crear_vehiculo(c, placa="ABC123")  # quedaron iguales tras normalizar los datos
+        self.assertFalse(placa_duplicada("ABC123", propio))
+        self.assertTrue(placa_duplicada("ABC123"))
+        otro = crear_vehiculo(c, placa="XYZ999")
+        self.assertTrue(placa_duplicada("ABC123", otro))
+        self.assertFalse(placa_duplicada("XYZ999 ", otro))

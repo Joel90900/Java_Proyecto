@@ -100,6 +100,13 @@ class EditarEliminarTests(Base):
         r = self.client.post(f"/vehiculos/{self.v.pk}/editar", {**base, "placa": "abc123"})  # su propia placa en minúsculas
         self.assertEqual(r.status_code, 302)
 
+    def test_editar_con_placa_repetida_por_la_normalizacion(self):  # revisión final
+        crear_vehiculo(crear_cliente(correo="dos@test.com"), placa="ABC123")  # self.v también es ABC123
+        datos = {"nombreVehiculo": "Nuevo", "marca": "Kia", "color": "Azul", "placa": "abc123", "tipoPlaca": "publico"}
+        self.assertEqual(self.client.post(f"/vehiculos/{self.v.pk}/editar", datos).status_code, 302)
+        self.v.refresh_from_db()
+        self.assertEqual(self.v.color, "Azul")
+
     def test_eliminar_conserva_historial(self):  # F3
         crear_sensor(self.v)
         crear_lectura(self.v.pk)

@@ -45,6 +45,12 @@ class VehiculosAdminTests(Base):
         v.refresh_from_db()
         self.assertEqual(v.cliente, otro)
 
+    def test_editar_con_placa_repetida_por_la_normalizacion(self):  # revisión final
+        v = crear_vehiculo(self.cliente, placa="ABC123")
+        crear_vehiculo(crear_cliente(correo="dos@test.com"), placa="ABC123")
+        self.assertRedirects(self.client.post(f"/admin/vehiculo/{v.pk}/editar", self.datos(placa="ABC123", color="Azul")),
+                             "/admin", fetch_redirect_response=False)
+
     def test_editar_muestra_solo_el_anio_y_lo_acepta_de_vuelta(self):
         v = crear_vehiculo(self.cliente, modelo="2019-01-01")
         self.assertContains(self.client.get(f"/admin/vehiculo/{v.pk}/editar"), 'name="modelo" value="2019"')

@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from core.auth import (cerrar_sesion_cliente, cifrar_contrasena, cliente_requerido, iniciar_sesion_cliente,
                        verificar_contrasena)
-from core.consultas import igual_mysql
+from core.consultas import igual_mysql, placa_duplicada
 from core.http import metodos, parametro
 from core.models import Cliente, Sensor, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
@@ -126,7 +126,7 @@ def vehiculo_crear(request):
 
     error = validar_vehiculo(nombre_vehiculo, marca, modelo, color, placa, tipo_placa) or validar_largos(
         Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
-    if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
+    if error is None and placa_duplicada(placa):
         error = PLACA_DUPLICADA
     if error:
         return render(request, "paginas/crear-vehiculo.html", {"error": error})
@@ -164,8 +164,7 @@ def vehiculo_editar(request, id):
     error = validar_vehiculo(nombre_vehiculo, marca, None, color, placa, tipo_placa,
                              modelo_obligatorio=False) or validar_largos(
         Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
-    otros = Vehiculo.objects.exclude(pk=vehiculo.pk)
-    if error is None and igual_mysql(otros, "placa", placa).exists():
+    if error is None and placa_duplicada(placa, vehiculo):
         error = PLACA_DUPLICADA
     if error:
         return render(request, "paginas/editar-vehiculo.html", {"error": error, "vehiculo": vehiculo, "cliente": cliente})

@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.obd2 import calcular_nivel, crear_alerta_si_corresponde, estado_por_nivel, unidad_de, valor_simulado
 from core.auth import cifrar_contrasena, cliente_requerido, verificar_contrasena
-from core.consultas import igual_mysql
+from core.consultas import igual_mysql, placa_duplicada
 from core.http import metodos, parametro
 from core.models import Alerta, Cliente, Lectura, Sensor, Vehiculo
 from core.normalizacion import normalizar_modelo, normalizar_placa, normalizar_tipo_placa
@@ -162,7 +162,7 @@ def crear_vehiculo(request):
     error = "Cliente no encontrado." if cliente is None else validar_vehiculo(
         nombre_vehiculo, marca, modelo, color, placa, tipo_placa) or validar_largos(
         Vehiculo, {"nombre_vehiculo": nombre_vehiculo, "marca": marca, "color": color})
-    if error is None and igual_mysql(Vehiculo.objects.all(), "placa", placa).exists():
+    if error is None and placa_duplicada(placa):
         error = "Ya existe un vehículo registrado con esa placa."
     if error:
         return respuesta_json({"ok": False, "mensaje": error})
