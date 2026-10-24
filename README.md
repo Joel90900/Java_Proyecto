@@ -13,7 +13,7 @@ Conserva las mismas pantallas, rutas, reglas de negocio y la API que usa la app 
 | Documento | Contenido |
 |---|---|
 | `docs/superpowers/specs/2026-10-21-migracion-django-design.md` | Diseño de la migración y lista de cambios respecto a Java |
-| `docs/PENDIENTES.md` | Comportamientos de Java que se conservaron a propósito |
+| `docs/PENDIENTES.md` | Lo que queda por corregir (lotes B, C y D) y diferencias conocidas con Java |
 | `PATRONES_GOF.md` | Patrones de diseño (Strategy, Factory, Singleton, Observer) |
 
 ## Requisitos
