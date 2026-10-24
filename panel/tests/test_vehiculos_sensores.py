@@ -88,6 +88,15 @@ class FormulariosTests(Base):
         self.assertNotContains(self.client.get(f"/admin/vehiculo/{v.pk}/editar"), "None")
 
 
+class VehiculoSinPlacaTests(Base):  # lote A
+    def test_vehiculo_sin_placa_no_muestra_null(self):
+        v = crear_vehiculo(self.cliente, placa=None)
+        s = crear_sensor(v)
+        for url in ("/admin/sensor/nuevo", f"/admin/sensor/{s.pk}/editar", "/admin",
+                    f"/admin/reporte-cliente-pdf/{self.cliente.pk}"):
+            self.assertNotRegex(self.client.get(url).content.decode(), r"(- |· |PLACA: )null", url)
+
+
 class SensoresAdminTests(Base):
     def setUp(self):
         super().setUp()

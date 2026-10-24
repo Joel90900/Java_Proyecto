@@ -244,7 +244,7 @@ def pdf_cliente(cliente) -> bytes:
         elementos.append(Spacer(1, SALTO_LINEA))
         elementos.append(_parrafo(f"{texto_java(v.nombre_vehiculo)} — {texto_java(v.marca)}",
                                   "Helvetica-Bold", 13, AZUL_OSCURO))
-        elementos.append(_parrafo(f"Placa: {_nr(v.placa)}   |   Color: {texto_java(v.color)}",
+        elementos.append(_parrafo(f"Placa: {v.placa if v.placa is not None else '-'}   |   Color: {texto_java(v.color)}",
                                   tamano=10, color=GRIS_TEXTO))
         sensores = list(v.sensores.all())
         if sensores:

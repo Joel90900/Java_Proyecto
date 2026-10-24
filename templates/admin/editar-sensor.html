@@ -44,7 +44,7 @@ input:focus,select:focus{outline:2px solid var(--red);border-color:transparent}
   <form method="post" action="{% url 'admin_sensor_editar' sensor.id_sensor %}">{% csrf_token %}
     <label>Vehículo
       <select name="vehiculoId" required>
-        {% for v in vehiculos %}<option value="{{ v.id_vehiculo }}"{% if sensor.vehiculo_id == v.id_vehiculo %} selected{% endif %}>{{ v.nombre_vehiculo|java }} - {{ v.placa|java }}{% if v.cliente %} ({{ v.cliente.nombre_cliente|java }}){% endif %}</option>{% endfor %}
+        {% for v in vehiculos %}<option value="{{ v.id_vehiculo }}"{% if sensor.vehiculo_id == v.id_vehiculo %} selected{% endif %}>{{ v.nombre_vehiculo|java }} - {{ v.placa|default_if_none:"-" }}{% if v.cliente %} ({{ v.cliente.nombre_cliente|java }}){% endif %}</option>{% endfor %}
       </select>
     </label>
     <label>Nombre del sensor<input type="text" name="nombreSensor" value="{{ sensor.nombre_sensor|default_if_none:"" }}" required></label>

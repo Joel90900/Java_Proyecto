@@ -98,7 +98,7 @@
         {% for v in vehiculos %}<div class="vehiculo-card">
             <div class="vehiculo-header">
                 <div class="vehiculo-title">{{ v.nombre_vehiculo|java }} — {{ v.marca|java }}{% if v.modelo is not None %} {{ v.modelo }}{% endif %}</div>
-                <div class="vehiculo-meta">PLACA: {{ v.placa|java }}  |  COLOR: {% if v.color is not None %}{{ v.color }}{% else %}-{% endif %}</div>
+                <div class="vehiculo-meta">PLACA: {{ v.placa|default_if_none:"-" }}  |  COLOR: {% if v.color is not None %}{{ v.color }}{% else %}-{% endif %}</div>
             </div>
 
             <table>

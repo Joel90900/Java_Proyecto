@@ -267,7 +267,7 @@ tr:last-child td{border:0}tbody tr{transition:background .2s}tbody tr:hover{back
       <span class="badge {{ s.nivel|estado_nivel:"falla,adv,ok" }}">{{ s.nivel|estado_nivel:"FALLA,ADVERTENCIA,ÓPTIMO" }}</span>
     </div>
     <div class="sensor-nombre">📡 {{ s.nombre_sensor|java }}</div>
-    <div class="sensor-veh">{% if s.vehiculo %}🚗 {{ s.vehiculo.nombre_vehiculo|java }} · {{ s.vehiculo.placa|java }}{% else %}Sin vehículo{% endif %}</div>
+    <div class="sensor-veh">{% if s.vehiculo %}🚗 {{ s.vehiculo.nombre_vehiculo|java }} · {{ s.vehiculo.placa|default_if_none:"-" }}{% else %}Sin vehículo{% endif %}</div>
     <div class="sensor-nivel-label">
       <span class="sensor-nivel-text">NIVEL DE DESGASTE</span>
       <span class="sensor-nivel-value">{% if s.nivel is not None %}{{ s.nivel }}%{% else %}0%{% endif %}</span>
