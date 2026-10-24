@@ -6,7 +6,8 @@ y a ReporteController.exportarExcel. El PDF reproduce el diseño de iText (tama�
 paleta, encabezado con logo, línea verde, tablas con filas alternas y estado en
 color); es equivalente en contenido, no idéntico píxel a píxel.
 """
-from io import BytesIO
+import csv
+from io import BytesIO, StringIO
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -52,36 +53,37 @@ def _nombre_completo(cliente) -> str:
 # CSV (AdminController.exportarCsv)
 # ---------------------------------------------------------------------------
 def csv_reporte(tipo: str) -> str:
-    """Mismas columnas y formato que los printf de Java; sin escapar comas, como el original."""
-    t = texto_java
-    lineas = []
+    """Mismas columnas que los printf de Java, pero escapado con el módulo csv, con vacío en lugar de "null"
+    y con BOM para que Excel lea las tildes (lote A). Un tipo desconocido da un archivo vacío, como en Java."""
+    salida = StringIO()
+    fila = csv.writer(salida, lineterminator=FIN_LINEA).writerow
     if tipo == "clientes":
-        lineas.append("ID,Nombre,Correo,Estado,Vehiculos")
+        fila(["ID", "Nombre", "Correo", "Estado", "Vehiculos"])
         for c in Cliente.objects.all():
-            lineas.append(f"{c.id_cliente},{t(c.nombre_cliente)} {t(c.apellido_cliente)},{t(c.correo)},"
-                          f"{t(c.estado)},{c.vehiculos.count()}")
+            fila([c.id_cliente, _nombre_completo(c), _nr(c.correo), _nr(c.estado), c.vehiculos.count()])
     elif tipo == "sensores":
-        lineas.append("Sensor,Tipo,Nivel,Estado,Vehiculo,Cliente")
+        fila(["Sensor", "Tipo", "Nivel", "Estado", "Vehiculo", "Cliente"])
         for s in Sensor.objects.all():
             estado = "OK" if s.nivel < 40 else "Advertencia" if s.nivel < 70 else "Falla"
-            vehiculo = t(s.vehiculo.nombre_vehiculo) if s.vehiculo else "-"
-            cliente = t(s.vehiculo.cliente.nombre_cliente) if s.vehiculo and s.vehiculo.cliente else "-"
-            lineas.append(f"{t(s.nombre_sensor)},{t(s.tipo_sensor)},{s.nivel},{estado},{vehiculo},{cliente}")
+            vehiculo = _nr(s.vehiculo.nombre_vehiculo) if s.vehiculo else "-"
+            cliente = _nr(s.vehiculo.cliente.nombre_cliente) if s.vehiculo and s.vehiculo.cliente else "-"
+            fila([_nr(s.nombre_sensor), _nr(s.tipo_sensor), s.nivel, estado, vehiculo, cliente])
     elif tipo == "fallas":
-        lineas.append("Vehiculo,Placa,Cliente,Sensor,Nivel,Tipo Dano")
+        fila(["Vehiculo", "Placa", "Cliente", "Sensor", "Nivel", "Tipo Dano"])
         for s in Sensor.objects.all():
             if s.nivel >= 70:
-                vehiculo = t(s.vehiculo.nombre_vehiculo) if s.vehiculo else "-"
-                placa = t(s.vehiculo.placa) if s.vehiculo else "-"
-                cliente = t(s.vehiculo.cliente.nombre_cliente) if s.vehiculo and s.vehiculo.cliente else "-"
+                vehiculo = _nr(s.vehiculo.nombre_vehiculo) if s.vehiculo else "-"
+                placa = _nr(s.vehiculo.placa) if s.vehiculo else "-"
+                cliente = _nr(s.vehiculo.cliente.nombre_cliente) if s.vehiculo and s.vehiculo.cliente else "-"
                 tipo_dano = s.tipo_dano if s.tipo_dano is not None else "-"
-                lineas.append(f"{vehiculo},{placa},{cliente},{t(s.nombre_sensor)},{s.nivel},{tipo_dano}")
+                fila([vehiculo, placa, cliente, _nr(s.nombre_sensor), s.nivel, tipo_dano])
     elif tipo == "bloqueados":
-        lineas.append("Nombre,Correo,Vehiculos")
+        fila(["Nombre", "Correo", "Vehiculos"])
         for c in Cliente.objects.all():
             if c.estado == "bloqueado":
-                lineas.append(f"{t(c.nombre_cliente)} {t(c.apellido_cliente)},{t(c.correo)},{c.vehiculos.count()}")
-    return "".join(linea + FIN_LINEA for linea in lineas)
+                fila([_nombre_completo(c), _nr(c.correo), c.vehiculos.count()])
+    texto = salida.getvalue()
+    return "\ufeff" + texto if texto else ""
 
 
 # ---------------------------------------------------------------------------
@@ -242,7 +244,7 @@ def pdf_cliente(cliente) -> bytes:
         elementos.append(Spacer(1, SALTO_LINEA))
         elementos.append(_parrafo(f"{texto_java(v.nombre_vehiculo)} — {texto_java(v.marca)}",
                                   "Helvetica-Bold", 13, AZUL_OSCURO))
-        elementos.append(_parrafo(f"Placa: {texto_java(v.placa)}   |   Color: {texto_java(v.color)}",
+        elementos.append(_parrafo(f"Placa: {_nr(v.placa)}   |   Color: {texto_java(v.color)}",
                                   tamano=10, color=GRIS_TEXTO))
         sensores = list(v.sensores.all())
         if sensores:

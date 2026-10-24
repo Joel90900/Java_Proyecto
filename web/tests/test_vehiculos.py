@@ -109,6 +109,12 @@ class EditarEliminarTests(Base):
         self.assertFalse(Vehiculo.objects.filter(pk=self.v.pk).exists())
         self.assertEqual((Sensor.objects.count(), Lectura.objects.count()), (0, 1))
 
+    def test_campos_vacios_no_muestran_null(self):  # lote A
+        sin_placa = crear_vehiculo(self.cliente, placa=None)
+        crear_sensor(sin_placa, tipo_dano=None)
+        self.assertNotContains(self.client.get("/sensores"), "Tipo daño: null")
+        self.assertNotContains(self.client.get(f"/vehiculos/{sin_placa.pk}/editar"), "— null")
+
     def test_paginas_con_datos_importados(self):  # Review Focus 1
         importado = crear_vehiculo(self.cliente, placa="emt262", tipo_placa="Público", modelo="2026-01-01")
         crear_sensor(importado, nivel=50)

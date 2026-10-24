@@ -225,7 +225,7 @@
                         </div>
 
                         <div class="sensor-nombre">{{ s.nombre_sensor }}</div>
-                        <div class="sensor-dano">Tipo daño: {{ s.tipo_dano|java }}</div>
+                        <div class="sensor-dano">Tipo daño: {{ s.tipo_dano|default_if_none:"-" }}</div>
 
                         <div class="sensor-nivel-label">
                             <span class="sensor-nivel-text">NIVEL DE DESGASTE</span>

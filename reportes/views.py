@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from core.auth import admin_requerido
 from core.http import metodos
 from core.models import Cliente, Sensor, Vehiculo
+from core.normalizacion import TIPOS_PLACA
 from core.patrones.singleton import UmbralesReporte
 from core.utilidades import ahora, redondear_java
 from reportes.exportar import csv_reporte, datos_pdf_general, excel_reporte, pdf_cliente, pdf_general
@@ -14,8 +15,6 @@ from reportes.filtros import (STRATEGY_FILTRO, filtrar_clientes, filtrar_sensore
                               parametros_filtro)
 
 TIPO_EXCEL = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-TIPOS_PLACA = ["particular", "publico"]
 
 
 def vehiculos_con_fallas(con_nivel_nulo_como_cero: bool) -> list:
@@ -52,7 +51,7 @@ def reportes(request):
         "nivelMin": None, "nivelMax": None, "ordenarPor": "",
         "tiposSensor": sorted({s.tipo_sensor for s in sensores if s.tipo_sensor and s.tipo_sensor.strip()}),
         "marcas": sorted({v.marca for v in Vehiculo.objects.all() if v.marca and v.marca.strip()}),
-        "tiposPlaca": TIPOS_PLACA,
+        "tiposPlaca": list(TIPOS_PLACA),
     }
     return render(request, "admin/reportes.html", contexto)
 
@@ -70,13 +69,17 @@ def reportes_filtrado(request):
     clientes = filtrar_clientes(todos_clientes, filtros["q"], filtros["estadoCliente"], filtros["marca"],
                                 filtros["tipoPlaca"])
     umbrales = UmbralesReporte.INSTANCIA
+    # Los totales se calculan sobre los clientes y sensores filtrados (lote A).
+    ids_clientes = {c.id_cliente for c in clientes}
+    vehiculos = [v for v in Vehiculo.objects.all() if v.cliente_id in ids_clientes]
+    con_falla = {s.vehiculo_id for s in sensores if umbrales.es_falla(nz_nivel(s))}
     contexto = {
         "clientes": clientes,
         "todosSensores": sensores,
-        "clientesBloqueados": [c for c in todos_clientes if c.estado == "bloqueado"],
-        "vehiculosConFallas": vehiculos_con_fallas(con_nivel_nulo_como_cero=True),
+        "clientesBloqueados": [c for c in clientes if c.estado == "bloqueado"],
+        "vehiculosConFallas": [v for v in vehiculos if v.id_vehiculo in con_falla],
         "totalClientes": len(clientes),
-        "totalVehiculos": Vehiculo.objects.count(),
+        "totalVehiculos": len(vehiculos),
         "totalSensores": len(sensores),
         "totalFallas": sum(1 for s in sensores if umbrales.es_falla(nz_nivel(s))),
         "totalAdvertencias": sum(1 for s in sensores if umbrales.es_advertencia(nz_nivel(s))),
@@ -84,7 +87,7 @@ def reportes_filtrado(request):
         # Orden de aparición (LinkedHashSet en Java), a diferencia de /admin/reportes que los ordena.
         "tiposSensor": list(dict.fromkeys(s.tipo_sensor for s in todos if s.tipo_sensor is not None)),
         "marcas": list(dict.fromkeys(v.marca for v in Vehiculo.objects.all() if v.marca is not None)),
-        "tiposPlaca": TIPOS_PLACA,
+        "tiposPlaca": list(TIPOS_PLACA),
     }
     return render(request, "admin/reportes.html", contexto)
 

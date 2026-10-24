@@ -67,6 +67,7 @@ tbody tr:hover{background:#15151a}
     <div><h1>Reportes</h1><p class="sub">Consulta, filtra y exporta la información del sistema.</p></div>
     <div class="grupo">
       <a class="btn rojo" href="{% url 'admin_reportes_pdf' %}">Descargar PDF completo</a>
+      <a class="btn" href="{% url 'admin_reportes_pdf_vista' %}" target="_blank" rel="noopener">Vista imprimible</a>
       <a class="btn" href="{% url 'admin_reportes_excel' %}">Descargar Excel</a>
       <a class="btn" href="{% url 'admin_reportes_csv' 'sensores' %}">CSV sensores</a>
       <a class="btn" href="{% url 'admin_reportes_csv' 'fallas' %}">CSV fallas</a>
@@ -156,7 +157,10 @@ tbody tr:hover{background:#15151a}
           <td>{{ c.correo|default_if_none:"" }}</td>
           <td><span class="badge {{ c.estado|default_if_none:"" }}">{{ c.estado|default_if_none:"" }}</span></td>
           <td>{{ c.vehiculos.count }}</td>
-          <td><a class="btn chico" href="{% url 'admin_reportes_cliente_pdf' c.id_cliente %}">PDF</a></td>
+          <td>
+            <a class="btn chico" href="{% url 'admin_reportes_cliente_pdf' c.id_cliente %}">PDF</a>
+            <a class="btn chico" href="{% url 'admin_reporte_cliente_vista' c.id_cliente %}" target="_blank" rel="noopener">Ficha</a>
+          </td>
         </tr>{% endfor %}
       </tbody>
     </table>
@@ -175,7 +179,7 @@ tbody tr:hover{background:#15151a}
           <td>{{ s.nombre_sensor }}</td>
           <td class="mono">{{ s.tipo_sensor }}</td>
           <td>{% if s.vehiculo %}{{ s.vehiculo.nombre_vehiculo|java }}{% else %}-{% endif %}</td>
-          <td class="mono">{% if s.vehiculo %}{{ s.vehiculo.placa|java }}{% else %}-{% endif %}</td>
+          <td class="mono">{% if s.vehiculo %}{{ s.vehiculo.placa|default_if_none:"" }}{% else %}-{% endif %}</td>
           <td>{% if s.vehiculo and s.vehiculo.cliente %}{{ s.vehiculo.cliente.nombre_cliente|java }} {{ s.vehiculo.cliente.apellido_cliente|java }}{% else %}-{% endif %}</td>
           <td class="mono">{% if s.nivel is not None %}{{ s.nivel }}%{% else %}0%{% endif %}</td>
           <td>

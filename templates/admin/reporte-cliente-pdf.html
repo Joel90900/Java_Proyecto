@@ -86,7 +86,7 @@
             <div class="info-item">
                 <div class="info-lbl">Estado de Cuenta</div>
                 <div class="info-val">
-                    <span style="{% if cliente.estado|lower == 'activo' %}color:#1c7c4c;{% else %}color:#c52727;{% endif %}">{{ cliente.estado|upper }}</span>
+                    <span style="{% if cliente.estado|lower == 'activo' %}color:#1c7c4c;{% else %}color:#c52727;{% endif %}">{{ cliente.estado|default_if_none:""|upper }}</span>
                 </div>
             </div>
         </div>

@@ -241,7 +241,7 @@
                         <td style="font-weight:600;">{{ a.nombre_sensor }}</td>
                         <td class="mono">{{ a.tipo_sensor }}</td>
                         <td>{% if a.vehiculo %}{{ a.vehiculo.nombre_vehiculo|java }}{% else %}-{% endif %}</td>
-                        <td class="mono">{% if a.vehiculo %}{{ a.vehiculo.placa|java }}{% else %}-{% endif %}</td>
+                        <td class="mono">{% if a.vehiculo %}{{ a.vehiculo.placa|default_if_none:"" }}{% else %}-{% endif %}</td>
                         <td>{% if a.vehiculo and a.vehiculo.cliente %}{{ a.vehiculo.cliente.nombre_cliente|java }} {{ a.vehiculo.cliente.apellido_cliente|java }}{% else %}-{% endif %}</td>
                         <td class="mono">{% if a.nivel is not None %}{{ a.nivel }}%{% else %}0%{% endif %}</td>
                         <td>
@@ -275,7 +275,7 @@
                     <td>{{ s.nombre_sensor }}</td>
                     <td class="mono">{{ s.tipo_sensor }}</td>
                     <td>{% if s.vehiculo %}{{ s.vehiculo.nombre_vehiculo|java }}{% else %}-{% endif %}</td>
-                    <td class="mono">{% if s.vehiculo %}{{ s.vehiculo.placa|java }}{% else %}-{% endif %}</td>
+                    <td class="mono">{% if s.vehiculo %}{{ s.vehiculo.placa|default_if_none:"" }}{% else %}-{% endif %}</td>
                     <td class="mono">{% if s.nivel is not None %}{{ s.nivel }}%{% else %}0%{% endif %}</td>
                     <td>
                         <span class="badge {{ s|estado_informe:"badge-falla,badge-advertencia,badge-optimo" }}">{{ s|estado_informe:"FALLA,ADVERTENCIA,ÓPTIMO" }}</span>
